@@ -1,0 +1,34 @@
+﻿<Window x:Class="DIP.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DIP"
+        mc:Ignorable="d"
+        Title="201800800354" Height="629.6" Width="1056.629" WindowStyle="ThreeDBorderWindow">
+    <Viewbox Stretch="UniformToFill">
+        <DockPanel x:Name="dp" LastChildFill="True" HorizontalAlignment="Left" Height="568" VerticalAlignment="Top" Width="1046">
+            <Border BorderBrush="LightGray" DockPanel.Dock="Left" BorderThickness="0,0,1,0">
+                <ScrollViewer>
+
+                    <StackPanel x:Name="BtnSp" Height="Auto" VerticalAlignment="Top" Width="198">
+                        <Button Margin="40,20,40,10" Content="打开图片" Height="29" Click="Button_Click"/>
+                        <Button Margin="40,20,40,10" Content="原图信息" Height="29"/>
+                        <Button Margin="40,20,40,10" Content="旋转" Height="29"/>
+                    </StackPanel>
+
+                </ScrollViewer>
+            </Border>
+
+            <Border Panel.ZIndex="99" BorderBrush="Gray" DockPanel.Dock="Bottom" BorderThickness="0,1,0,0">
+                <StackPanel Background="#BFD7DFE7" x:Name="grid" Height="146" VerticalAlignment="Center"  Margin="0" Orientation="Horizontal"/>
+            </Border>
+            <Canvas Background="Gray">
+
+                <Image x:Name="img" Panel.ZIndex="-20" Margin="10, 10" 
+                     VerticalAlignment="Top"/>
+
+            </Canvas>
+        </DockPanel>
+    </Viewbox>
+</Window>
