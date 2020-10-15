@@ -15,6 +15,7 @@
                         <Button Margin="40,20,40,10" Content="打开图片" Height="29" Click="Button_Click"/>
                         <Button Margin="40,20,40,10" Content="原图信息" Height="29"/>
                         <Button Margin="40,20,40,10" Content="旋转" Height="29"/>
+                        <Button Margin="40,20,40,10" Content="缩小" Height="29"/>
                     </StackPanel>
 
                 </ScrollViewer>

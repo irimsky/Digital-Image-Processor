@@ -61,6 +61,26 @@ namespace DIP
                         MessageBox.Show(ex.Message, "错误");
                     }
                 }
+                else if(status == "缩小")
+                {
+                    TextBox tbw = (TextBox)FindName("wscale"), 
+                        tbh = (TextBox)FindName("hscale");
+                    try
+                    {
+                        double wscale = Convert.ToDouble(tbw.Text);
+                        double hscale = Convert.ToDouble(tbh.Text);
+                        if(wscale>1||wscale<=0||hscale>1||hscale<=0)
+                        {
+                            MessageBox.Show("请输入有效范围的数字");
+                            return;
+                        }
+                        minimize(hscale, wscale);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message, "错误");
+                    }
+                }
             }
             else
             {
@@ -107,6 +127,46 @@ namespace DIP
                         grid.UnregisterName("angle");
                     grid.RegisterName("angle", tb);
                     grid.Children.Add(tb);
+
+                    Button btn = new Button();
+                    btn.Margin = new Thickness(20, 20, 20, 20);
+                    btn.Content = "确认";
+                    btn.Height = 20;
+                    btn.Width = 50;
+                    btn.Click += Button_Click;
+                    grid.Children.Add(btn);
+                }
+                else if(txt=="缩小")
+                {
+                    grid.Children.Clear();
+                    Label lb = new Label();
+                    lb.Content = "宽缩小幅度（0-1）:";
+                    lb.VerticalAlignment = VerticalAlignment.Center;
+                    grid.Children.Add(lb);
+
+                    TextBox tbw = new TextBox();
+                    tbw.Width = 40;
+                    tbw.Height = 20;
+                    tbw.Margin = new Thickness(10, 0, 20, 0);
+                    if (FindName("wscale") != null)
+                        grid.UnregisterName("wscale");
+                    grid.RegisterName("wscale", tbw);
+                    grid.Children.Add(tbw);
+
+                    Label lb2 = new Label();
+                    lb2.Content = "高缩小幅度（0-1）:";
+                    lb2.VerticalAlignment = VerticalAlignment.Center;                    
+                    lb2.Margin = new Thickness(20, 0, 0, 0);
+                    grid.Children.Add(lb2);
+
+                    TextBox tbh = new TextBox();
+                    tbh.Width = 40;
+                    tbh.Height = 20;
+                    tbh.Margin = new Thickness(10, 0, 20, 0);
+                    if (FindName("hscale") != null)
+                        grid.UnregisterName("hscale");
+                    grid.RegisterName("hscale", tbh);
+                    grid.Children.Add(tbh);
 
                     Button btn = new Button();
                     btn.Margin = new Thickness(20, 20, 20, 20);

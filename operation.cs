@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 
 
 namespace DIP
 {
+    /// <summary>
+    /// 自定义矩阵类
+    /// </summary>
     class Matrix
     { 
         public double[] v;
@@ -54,6 +55,7 @@ namespace DIP
         }
 
     }
+
 
     public partial class MainWindow : Window
     {
@@ -117,7 +119,7 @@ namespace DIP
         }
 
         /// <summary>
-        /// 求一个位图图旋转后的坐标范围
+        /// 求位图旋转后的坐标范围
         /// </summary>
         /// <param name="h">高</param>
         /// <param name="w">宽</param>
@@ -186,6 +188,45 @@ namespace DIP
                         bmp_.SetPixel(j, i, Color.White);
                     else
                         bmp_.SetPixel(j, i, bmp.GetPixel(oy, ox));
+                }
+            }
+            img.Source = bmp2img(ref bmp_);
+        }
+
+        /// <summary>
+        /// 缩小位图尺寸
+        /// </summary>
+        /// <param name="k1">高缩小幅度</param>
+        /// <param name="k2">宽缩小幅度</param>
+        private void minimize(double k1, double k2)
+        {
+            double di = 1 / k1, dj = 1 / k2;
+            int nw = (int)Math.Round(bmp.Width * k2, 0), 
+                nh = (int)Math.Round(bmp.Height * k1, 0);
+            Bitmap bmp_ = new Bitmap(nw, nh);
+            for(int i=0;i<nh;i++)
+            {
+                for (int j = 0; j < nw; j++)
+                {
+                    int sx = (int)Math.Round(di * i), ex = (int)Math.Round(di * (i+1));
+                    int sy = (int)Math.Round(dj * j), ey = (int)Math.Round(dj * (j+1));
+                    int rsum = 0, gsum = 0, bsum = 0;
+                    for (int ii = sx;ii<ex;ii++)
+                    {
+                        for(int jj = sy; jj < ey; jj++)
+                        {
+                            Color col = bmp.GetPixel(jj, ii);
+                            rsum += col.R;
+                            gsum += col.G;
+                            bsum += col.B;
+                        }
+                    }
+                    Color color = Color.FromArgb(
+                        rsum / ((ex - sx) * (ey - sy)),
+                        gsum / ((ex - sx) * (ey - sy)),
+                        bsum / ((ex - sx) * (ey - sy))
+                        );
+                    bmp_.SetPixel(j, i, color);
                 }
             }
             img.Source = bmp2img(ref bmp_);
