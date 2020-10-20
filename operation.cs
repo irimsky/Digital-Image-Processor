@@ -160,7 +160,7 @@ namespace DIP
         }
 
         /// <summary>
-        /// 将bmp旋转，用反变换方法
+        /// 旋转
         /// </summary>
         /// <param name="angle">角度</param>
         private void rotate(double angle)
@@ -195,7 +195,7 @@ namespace DIP
         }
 
         /// <summary>
-        /// 缩小位图尺寸
+        /// 缩小
         /// </summary>
         /// <param name="k1">高缩小幅度</param>
         /// <param name="k2">宽缩小幅度</param>
@@ -236,7 +236,7 @@ namespace DIP
         }
 
         /// <summary>
-        /// 放大位图尺寸
+        /// 放大
         /// </summary>
         /// <param name="k1">高扩大幅度</param>
         /// <param name="k2">宽扩大幅度</param>
@@ -274,13 +274,12 @@ namespace DIP
                     else
                     {
                         bmp_.SetPixel(sy, sx, bmp.GetPixel(j, i));
-                        // widx.Add(sy);
                     }                    
                 }
             }
             widx.Sort();
             hidx.Sort();
-            // MessageBox.Show(widx.IndexOf(2).ToString());
+            
             for(int j = 0;j < nw;j++)
             {
                 if (widx.IndexOf(j)>=0) 
@@ -338,7 +337,11 @@ namespace DIP
             img.Source = bmp2img(ref bmp_);
         }
 
-
+        /// <summary>
+        /// 错切
+        /// </summary>
+        /// <param name="c"></param>
+        /// <param name="b"></param>
         private void shear(double c, double b)
         {
 
