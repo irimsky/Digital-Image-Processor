@@ -18,6 +18,9 @@
                         <Button Margin="40,20,40,10" Content="缩小" Height="29"/>
                         <Button Margin="40,20,40,10" Content="放大" Height="29"/>
                         <Button Margin="40,20,40,10" Content="错切" Height="29"/>
+                        <Button Margin="40,20,40,10" Content="灰度化" Height="29"/>
+                        <Button Margin="40,20,40,10" Content="线性灰度变换" Height="29"/>
+                        <Button Margin="40,20,40,10" Content="直方图均衡化" Height="29"/>
                     </StackPanel>
 
                 </ScrollViewer>

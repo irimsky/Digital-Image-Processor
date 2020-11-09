@@ -101,7 +101,7 @@ namespace DIP
                         MessageBox.Show(ex.Message, "错误");
                     }
                 }
-                else if (status == "错切")
+                else if(status == "错切")
                 {
                     TextBox tbw = (TextBox)FindName("wscale"),
                         tbh = (TextBox)FindName("hscale");
@@ -116,6 +116,42 @@ namespace DIP
                         MessageBox.Show(ex.Message, "错误");
                     }
                 }
+                else if(status=="线性灰度变换")
+                {
+                    TextBox tba = (TextBox)FindName("rangea"),
+                        tbb = (TextBox)FindName("rangeb"),
+                        tbc = (TextBox)FindName("rangec"),
+                        tbd = (TextBox)FindName("ranged");
+                    try
+                    {
+                        int a = Convert.ToInt32(tba.Text);
+                        int b = Convert.ToInt32(tbb.Text);
+                        int c = Convert.ToInt32(tbc.Text);
+                        int d = Convert.ToInt32(tbd.Text);
+                        if (a > b || c > d || d - c <= b - a)
+                        {
+                            MessageBox.Show("范围错误或被拓展范围错误(拓展后范围要大于原范围)", "错误");
+                            return;
+                        }
+                        LinerGray(a, b, c, d);
+                    }
+                    catch(Exception ex)
+                    {
+                        MessageBox.Show(ex.Message, "错误");
+                    }
+                }
+            }
+            else if(txt=="灰度化")
+            {
+                if(bmp==null)
+                {
+                    MessageBox.Show("请打开一张图片!");
+                    return;
+                }
+                grid.Children.Clear();
+                Gray();
+                
+
             }
             else
             {
@@ -298,22 +334,85 @@ namespace DIP
                         btn.Click += Button_Click;
                         grid.Children.Add(btn);
                     }
+                    else if (txt == "线性灰度变换")
+                    {
+                        grid.Children.Clear();
+                        Label lb = new Label();
+                        lb.Content = "希望拓展的灰度范围:";
+                        lb.VerticalAlignment = VerticalAlignment.Center;
+                        grid.Children.Add(lb);
+
+                        TextBox tba = new TextBox();
+                        tba.Width = 40;
+                        tba.Height = 20;
+                        tba.Margin = new Thickness(10, 0, 0, 0);
+                        if (FindName("rangea") != null)
+                            grid.UnregisterName("rangea");
+                        grid.RegisterName("rangea", tba);
+                        grid.Children.Add(tba);
+
+                        lb = new Label();
+                        lb.Content = "~";
+                        lb.Margin = new Thickness(0);
+                        lb.VerticalAlignment = VerticalAlignment.Center;
+                        grid.Children.Add(lb);
+
+                        TextBox tbb = new TextBox();
+                        tbb.Width = 40;
+                        tbb.Height = 20;
+                        tbb.Margin = new Thickness(0, 0, 0, 0);
+                        if (FindName("rangeb") != null)
+                            grid.UnregisterName("rangeb");
+                        grid.RegisterName("rangeb", tbb);
+                        grid.Children.Add(tbb);
+
+                        lb = new Label();
+                        lb.Content = "" +
+                            "→";
+                        lb.VerticalAlignment = VerticalAlignment.Center;
+                        grid.Children.Add(lb);
+
+                        TextBox tbc = new TextBox();
+                        tbc.Width = 40;
+                        tbc.Height = 20;
+                        tbc.Margin = new Thickness(10, 0, 0, 0);
+                        if (FindName("rangec") != null)
+                            grid.UnregisterName("rangec");
+                        grid.RegisterName("rangec", tbc);
+                        grid.Children.Add(tbc);
+
+                        lb = new Label();
+                        lb.Content = "~";
+                        lb.Margin = new Thickness(0);
+                        lb.VerticalAlignment = VerticalAlignment.Center;
+                        grid.Children.Add(lb);
+
+                        TextBox tbd = new TextBox();
+                        tbd.Width = 40;
+                        tbd.Height = 20;
+                        tbd.Margin = new Thickness(0, 0, 0, 0);
+                        if (FindName("ranged") != null)
+                            grid.UnregisterName("ranged");
+                        grid.RegisterName("ranged", tbd);
+                        grid.Children.Add(tbd);
+
+                        Button btn = new Button();
+                        btn.Margin = new Thickness(20, 20, 20, 20);
+                        btn.Content = "确认";
+                        btn.Height = 20;
+                        btn.Width = 50;
+                        btn.Click += Button_Click;
+                        grid.Children.Add(btn);
+                    }
+                    else if (txt == "直方图均衡化")
+                    {
+                        Equalization();
+                    }
                 }
             }
             
             
         }
 
-        private void Button_Click_1(object sender, RoutedEventArgs e)
-        {
-            //grid.Children.Clear();
-            rotate(45);
-            Button btn = new Button();
-            btn.Margin = new Thickness(20, 20, 20, 20);
-            btn.Content = "添加";
-            btn.Height = 20;
-            btn.Width = 50;
-            grid.Children.Add(btn);
-        }
     }
 }

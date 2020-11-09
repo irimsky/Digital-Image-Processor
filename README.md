@@ -473,3 +473,227 @@ private void shear(double c, double b)
 
 ![错切后](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/shear3.png?x-oss-process=image/resize,p_50)
 
+
+
+
+
+# 灰度化
+
+将彩色图片**灰度化**，只需要将每一个像素的RGB值都设置为一样的即可。
+
+常见的RGB值计算公式为：$Gray(i,j)=[R(i,j)+G(i,j)+B(i,j)]÷3$
+
+但是因为人眼对颜色的感知能力不同，所以有一个比较合理的公式：
+
+$$Gray(i,j)=0299×R(i,j)+0.587×G(i,j)+0.114×B(i,j)$$
+
+
+
+```csharp
+/// <summary>
+/// 将图片灰度化
+/// </summary>
+private void Gray()
+{
+    Bitmap bmp_ = new Bitmap(bmp.Width, bmp.Height);
+    for(int i=0;i<bmp.Width;i++)
+    {
+        for(int j=0;j<bmp.Height;j++)
+        {
+            Color c = bmp.GetPixel(i, j);
+            int tmp = (int)(0.299 * c.R + 0.587 * c.G + 0.114 * c.B);
+            bmp_.SetPixel(i, j, Color.FromArgb(tmp, tmp, tmp));
+        }
+    }
+    img.Source = bmp2img(ref bmp_);
+    HistForm histForm = new HistForm(bmp);
+    histForm.Show();
+}
+```
+
+
+
+我们可以将**灰度直方图**绘制出来：
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace DIP
+{
+    public partial class HistForm : Form
+    {
+        //利用构造函数实现窗体之间的数据传递
+        public HistForm(Bitmap bmp)
+        {
+            InitializeComponent();
+
+            //把主窗体的图像数据传递给从窗体
+            bmpHist = bmp;
+            //灰度级计数
+            countPixel = new int[256];  //8位可表示256个灰度级
+        }
+
+        //图像数据
+        private Bitmap bmpHist;
+        //灰度等级
+        private int[] countPixel;
+
+        /// <summary>
+        /// 计算各个灰度级所具有的像素个数
+        /// </summary>
+        private void HistForm_Load(object sender, EventArgs e)
+        {
+            int bytes = bmpHist.Width * bmpHist.Height;
+            byte[] grayValues = new byte[bytes];
+            
+            //灰度等级数组清零
+            Array.Clear(countPixel, 0, 256);
+            //计算各个灰度级的像素个数
+            for (int i=0;i<bmpHist.Width;i++)
+                for(int j=0;j<bmpHist.Height;j++)
+                {
+                    byte temp = bmpHist.GetPixel(i, j).G;
+                    countPixel[temp]++;
+                }
+        }
+
+
+        /// <summary>
+        /// 绘制直方图
+        /// </summary>
+        private void HistForm_Paint(object sender, PaintEventArgs e)
+        {
+            //获取Graphics对象
+            Graphics g = e.Graphics;
+
+            //创建一个宽度为1的黑色钢笔
+            Pen curPen = new Pen(Brushes.Black, 1);
+
+            //绘制坐标轴
+            g.DrawLine(curPen, 50, 240, 320, 240);//横坐标
+            g.DrawLine(curPen, 50, 240, 50, 30);//纵坐标
+
+            //绘制并标识坐标刻度
+            g.DrawLine(curPen, 100, 240, 100, 242);
+            g.DrawLine(curPen, 150, 240, 150, 242);
+            g.DrawLine(curPen, 200, 240, 200, 242);
+            g.DrawLine(curPen, 250, 240, 250, 242);
+            g.DrawLine(curPen, 300, 240, 300, 242);
+            g.DrawString("0", new Font("New Timer", 8), Brushes.Black, new PointF(46, 242));
+            g.DrawString("50", new Font("New Timer", 8), Brushes.Black, new PointF(92, 242));
+            g.DrawString("100", new Font("New Timer", 8), Brushes.Black, new PointF(139, 242));
+            g.DrawString("150", new Font("New Timer", 8), Brushes.Black, new PointF(189, 242));
+            g.DrawString("200", new Font("New Timer", 8), Brushes.Black, new PointF(239, 242));
+            g.DrawString("250", new Font("New Timer", 8), Brushes.Black, new PointF(289, 242));
+            g.DrawLine(curPen, 48, 40, 50, 40);
+            g.DrawString("0", new Font("New Timer", 8), Brushes.Black, new PointF(34, 234));
+
+            //绘制直方图
+            double temp = 0;
+            int bytes = bmpHist.Width * bmpHist.Height;
+            for (int i = 0; i < 256; i++)
+            { 
+                //纵坐标长度
+                temp = 800.0 * countPixel[i] / bytes;
+                g.DrawLine(curPen, 50 + i, 240, 50 + i, 240 - (int)temp);
+            }
+            //释放对象
+            curPen.Dispose();
+        }
+
+    }
+}
+```
+
+
+
+![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/gray.png)
+
+
+
+# 拓展压缩的线性灰度变换
+
+由于图像的亮度范围不足或非线性可能会使图像的对比度不理想。
+
+所以采用图像灰度值变换方法，即改变图像像素的灰度值，以改变图像灰度的动态范围，增强图像的对比度。
+
+灰度变换分为线性变换 (正比或反比)和非线性变换。非线性变换有对数的(对数和反对数的)，幂次的(n次幂和n次方根变换) 。下面是一些灰度变换曲线。
+
+![用于图像增强的某些基本灰度变换函数](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/gray2.png?x-oss-process=image/resize,p_70)
+
+
+
+为了突出感兴趣目标所在的灰度区间，相对抑制那些不感兴趣的灰度空间，可采用**分段线性变换**
+
+在扩展感兴趣的[a,b]区间的同时，为了保留其他区间的灰度层次，也可以采用其它区间压缩的方法，既有扩有压，变换函数为
+
+![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/linegray.png)
+
+
+
+
+
+![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/linegray2.png)
+
+
+
+
+
+```csharp
+/// <summary>
+/// 拓展压缩线性灰度变化
+/// </summary>
+private void LinerGray(int a, int b, int c, int d)
+{
+
+    double alpha = (double)c/a;
+    double beta = (double)(d-c)/(b-a);
+    double gama = (double)(255-d)/(255-b);
+    Bitmap bmp_ = new Bitmap(bmp.Width, bmp.Height);
+    for(int i=0;i<bmp.Width;i++)
+    {
+        for(int j=0;j<bmp.Height;j++)
+        {
+            Color color = bmp.GetPixel(i, j);
+            int nc;
+            int tmp = (int)(0.299 * color.R + 0.587 * color.G + 0.114 * color.B);
+            if(tmp <= a)
+            {
+                nc = (int)(alpha * tmp);
+            }
+            else if(tmp >= b)
+            {
+                nc = (int)(d + gama * (tmp - b));
+            }
+            else
+            {
+                nc = (int)(c + beta * (tmp - a));
+            }
+
+            bmp_.SetPixel(i, j, Color.FromArgb(nc, nc, nc));
+        }
+    }
+    img.Source = bmp2img(ref bmp_);
+    HistForm histForm = new HistForm(bmp);
+    histForm.Show();
+}
+```
+
+![变换后的图片与变换前（左前，右后）后的直方图](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/linegray3.png)
+
+
+
+
+
+# 直方图均衡化
+
+
+
