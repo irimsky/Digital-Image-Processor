@@ -5,26 +5,56 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DIP"
         mc:Ignorable="d"
-        Title="201800800354" Height="629.6" Width="1056.629" WindowStyle="ThreeDBorderWindow">
+        Title="201800800354" Height="718.4" Width="968.172" WindowStyle="ThreeDBorderWindow">
+
     <Viewbox Stretch="UniformToFill">
-        <DockPanel x:Name="dp" LastChildFill="True" HorizontalAlignment="Left" Height="568" VerticalAlignment="Top" Width="1046">
-            <Border BorderBrush="LightGray" DockPanel.Dock="Left" BorderThickness="0,0,1,0">
-                <ScrollViewer>
+        <DockPanel x:Name="dp" LastChildFill="True" HorizontalAlignment="Left" Height="568" VerticalAlignment="Top" Width="814">
+            <Menu x:Name="MenuBar" FontSize="11" DockPanel.Dock="Top" Height="30" Background="#FFFDFAFA">
 
-                    <StackPanel x:Name="BtnSp" Height="Auto" VerticalAlignment="Top" Width="198">
-                        <Button Margin="40,20,40,10" Content="打开图片" Height="29" Click="Button_Click"/>
-                        <Button Margin="40,20,40,10" Content="原图信息" Height="29"/>
-                        <Button Margin="40,20,40,10" Content="旋转" Height="29"/>
-                        <Button Margin="40,20,40,10" Content="缩小" Height="29"/>
-                        <Button Margin="40,20,40,10" Content="放大" Height="29"/>
-                        <Button Margin="40,20,40,10" Content="错切" Height="29"/>
-                        <Button Margin="40,20,40,10" Content="灰度化" Height="29"/>
-                        <Button Margin="40,20,40,10" Content="线性灰度变换" Height="29"/>
-                        <Button Margin="40,20,40,10" Content="直方图均衡化" Height="29"/>
-                    </StackPanel>
+                <MenuItem Header="文件" Height="30">
+                    <MenuItem Header="打开图片"></MenuItem>
+                    <MenuItem Header="原图信息"></MenuItem>
+                </MenuItem>
+                <MenuItem Header="几何变换" Height="30">
+                    <MenuItem Header="放大"></MenuItem>
+                    <MenuItem Header="缩小"></MenuItem>
+                    <MenuItem Header="旋转"></MenuItem>
+                    <MenuItem Header="错切"></MenuItem>
 
-                </ScrollViewer>
-            </Border>
+                </MenuItem>
+                <MenuItem Header="灰度变换" Height="30">
+                    <MenuItem Header="灰度化"></MenuItem>
+                    <Separator></Separator>
+                    <MenuItem Header="灰度直方图"></MenuItem>
+                    <Separator></Separator>
+                    <MenuItem Header="线性灰度变换"></MenuItem>
+                    <MenuItem Header="直方图均衡化"></MenuItem>
+                </MenuItem>
+                <MenuItem Header="噪声抑制" Height="30">
+                    <MenuItem Header="高斯噪声"></MenuItem>
+                    <MenuItem Header="椒盐噪声"></MenuItem>
+                    <Separator></Separator>
+                    <MenuItem Header="均值滤波"></MenuItem>
+                    <MenuItem Header="中值滤波"></MenuItem>
+                    <Separator></Separator>
+                    <MenuItem Header="二值化"></MenuItem>
+                    <MenuItem Header="二值图像去噪"></MenuItem>
+                    <MenuItem Header="消除孤立黑像素点"></MenuItem>
+                    <Separator></Separator>
+                    <MenuItem Header="选择式掩膜滤波"></MenuItem>
+                    <MenuItem Header="KNN平滑滤波"></MenuItem>
+                </MenuItem>
+                <MenuItem Header="图像锐化">
+                    <MenuItem Header="双向梯度锐化"></MenuItem>
+                    <Separator></Separator>
+                    <MenuItem Header="Roberts算子锐化"></MenuItem>
+                    <MenuItem Header="Sobel算子锐化"></MenuItem>
+                    <Separator></Separator>
+                    <MenuItem Header="Laplacian算子锐化"></MenuItem>
+
+                </MenuItem>
+            </Menu>
+            <Border BorderBrush="LightGray" DockPanel.Dock="Left" BorderThickness="0,0,1,0"/>
 
             <Border Panel.ZIndex="99" BorderBrush="Gray" DockPanel.Dock="Bottom" BorderThickness="0,1,0,0">
                 <StackPanel Background="#BFD7DFE7" x:Name="grid" Height="146" VerticalAlignment="Center"  Margin="0" Orientation="Horizontal"/>
@@ -37,4 +67,6 @@
             </Canvas>
         </DockPanel>
     </Viewbox>
+
 </Window>
+

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
+using System.Collections;
 using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -9,6 +11,87 @@ using System.Windows.Media.Imaging;
 
 namespace DIP
 {
+
+    class EditOp
+    {
+        int[,,] dif;
+        int width, height;
+
+        EditOp(int w, int h)
+        {
+            width = w;
+            height = h;
+            dif = new int[w, h, 4];
+        }
+
+        EditOp(ref Bitmap old, ref Bitmap now)
+        {
+            if(old.Width == now.Width && old.Height == now.Height)
+            {
+                width = old.Width;
+                height = now.Width;
+                dif = new int[width, height, 4];
+
+                for(int i=0;i<width;i++)
+                {
+                    for(int j=0;j<width;i++)
+                    {
+                        Color c1 = old.GetPixel(i, j), c2 = now.GetPixel(i, j);
+                        dif[i, j, 0] = c2.R - c1.R;
+                        dif[i, j, 1] = c2.G - c1.G;
+                        dif[i, j, 2] = c2.B - c1.B;
+                        dif[i, j, 3] = c2.A - c1.A;
+                    }
+                }
+
+            }
+            else
+            {
+                width = now.Width;
+                height = now.Height;
+                dif = new int[width, height, 4];
+                for(int i=0;i<width;i++)
+                {
+                    for(int j=0;j<height;j++)
+                    {
+                        Color c = old.GetPixel(i, j);
+                        dif[i, j, 0] = c.R;
+                        dif[i, j, 1] = c.G;
+                        dif[i, j, 2] = c.B;
+                        dif[i, j, 3] = c.A;
+                    }
+                }
+            }
+
+        }
+
+        Bitmap Undo(ref Bitmap now)
+        {
+            Bitmap res = new Bitmap(width, height);
+            if (width == now.Width && height == now.Height)
+            { 
+                for(int i=0;i<width;i++)
+                {
+                    for(int j=0;j<height;j++)
+                    {
+                        Color c = now.GetPixel(i, j);
+                        res.SetPixel(i, j, 
+                            Color.FromArgb(c.A - dif[i, j, 4], c.R - dif[i, j, 0], c.G - dif[i, j, 1], c.B - dif[i, j, 2]));
+                    }
+                }
+                return res;
+            }
+            for(int i=0;i<width;i++)
+            {
+                for(int j=0;j<height;j++)
+                {
+                    res.SetPixel(i, j, Color.FromArgb(dif[i, j, 3], dif[i, j, 0], dif[i, j, 1], dif[i, j, 2]));
+                }
+            }
+            return res; 
+        }
+    }
+
     /// <summary>
     /// MainWindow.xaml 的交互逻辑
     /// </summary>
@@ -20,9 +103,11 @@ namespace DIP
         // 状态、 原图信息
         string status, info;
 
+        
+
         public MainWindow()
         {
-            FileStream fs = new FileStream("E:\\test.bmp", FileMode.Open);
+            FileStream fs = new FileStream("E:\\test3.bmp", FileMode.Open);
             bmp = new Bitmap(fs);
             bip = bmp.GetHbitmap();
             fs.Close();
@@ -30,23 +115,37 @@ namespace DIP
                 bip, IntPtr.Zero, Int32Rect.Empty,
                 BitmapSizeOptions.FromEmptyOptions());
             InitializeComponent();
-            foreach(Button i in BtnSp.Children)
-            {
-                i.Click += Button_Click;
-            }
+            
             img.Source = bitmapSource;
-
-            // 
+            foreach (MenuItem i in MenuBar.Items)
+            {
+                foreach (var j in i.Items)
+                    if(j.GetType() == typeof(MenuItem))
+                        ((MenuItem)j).Click += Button_Click;
+            }
+        
             TextBlock tb = new TextBlock();
-            tb.Margin = new Thickness(10, 5, 10, 10);
-            tb.FontSize = 16;
+            tb.Margin = new Thickness(15, 10, 10, 10);
+            tb.FontSize = 14;
             info = tb.Text = getInfo("E:\\test.bmp");
             grid.Children.Add(tb);
         }
 
+        private void Img_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            MessageBox.Show("cm");
+            img.Width = bmp.Width;
+            img.Height = bmp.Height;
+        }
+
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            string txt = (string)((Button)sender).Content;
+            string txt = "";
+            if (sender.GetType() == typeof(MenuItem))
+                txt = (string)((MenuItem)sender).Header;
+            else if (sender.GetType() == typeof(Button))
+                txt = (string)((Button)sender).Content;
+
             if(txt == "确认")
             {
                 if(status == "旋转")
@@ -140,6 +239,53 @@ namespace DIP
                         MessageBox.Show(ex.Message, "错误");
                     }
                 }
+                else if(status=="高斯噪声")
+                {
+                    TextBox tba = (TextBox)FindName("tbk");
+                    try
+                    {
+                        int k = Convert.ToInt32(tba.Text);
+                        GaussNoise(k);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message, "错误");
+                    }
+                    
+                }
+                else if(status=="椒盐噪声")
+                {
+                    TextBox tbw = (TextBox)FindName("SNR"),
+                        tbh = (TextBox)FindName("pa");
+                    try
+                    {
+                        double SNR = Convert.ToDouble(tbw.Text);
+                        double pa = Convert.ToDouble(tbh.Text);
+                        if(SNR > 1 || pa > 1 || SNR < 0 || pa < 0)
+                        {
+                            MessageBox.Show("输入范围错误！");
+                            return;
+                        }
+                        SaltNoise(SNR, pa);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message, "错误");
+                    }
+                }
+                else if(status=="二值化")
+                {
+                    TextBox tba = (TextBox)FindName("tbk");
+                    try
+                    {
+                        int k = Convert.ToInt32(tba.Text);
+                        Binarize(k);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message, "错误");
+                    }
+                }
             }
             else if(txt=="灰度化")
             {
@@ -153,23 +299,39 @@ namespace DIP
                 
 
             }
+            else if (txt == "灰度直方图")
+            {
+                HistForm histForm = new HistForm(bmp);
+                histForm.Show();
+            }
             else
             {
                 status = txt;
                 if (txt == "打开图片")
                 {
-                    Bitmap b2 = new Bitmap(200, 100);
-
-                    for (int i = 0; i < 200; i++)
-                        for (int j = 0; j < 50; j++)
-                            b2.SetPixel(i, j, Color.Red);
+                    OpenFileDialog openFileDialog = new OpenFileDialog();
+                    openFileDialog.Title = "选择位图源文件";
+                    openFileDialog.Filter = ".bmp|*.bmp";
+                    openFileDialog.FileName = string.Empty;
+                    openFileDialog.FilterIndex = 1;
+                    openFileDialog.Multiselect = false;
+                    openFileDialog.RestoreDirectory = true;
+                    if (openFileDialog.ShowDialog() == false)
+                    {
+                        return;
+                    }
+                    string txtFile = openFileDialog.FileName;
+                    FileStream fs = new FileStream(txtFile, FileMode.Open);
+                    Bitmap b2 = new Bitmap(fs);
+                    fs.Close();
                     BitmapSource bitmapSource = bmp2img(ref b2);
                     img.Source = bitmapSource;
                     status = "原图信息";
                     grid.Children.Clear();
                     TextBlock tb = new TextBlock();
-                    tb.Margin = new Thickness(10, 5, 10, 10);
-                    tb.FontSize = 16;
+                    tb.Margin = new Thickness(15, 10, 10, 10);
+                    tb.FontSize = 14;
+                    info = getInfo(txtFile);
                     tb.Text = info;
                     grid.Children.Add(tb);
                 }
@@ -184,7 +346,7 @@ namespace DIP
                     {
                         grid.Children.Clear();
                         TextBlock tb = new TextBlock();
-                        tb.Margin = new Thickness(10, 5, 10, 10);
+                        tb.Margin = new Thickness(15, 10, 10, 10);
                         tb.FontSize = 16;
                         tb.Text = info;
                         grid.Children.Add(tb);
@@ -195,6 +357,7 @@ namespace DIP
                         Label lb = new Label();
                         lb.Content = "角度:";
                         lb.VerticalAlignment = VerticalAlignment.Center;
+                        lb.Margin = new Thickness(10, 0, 0, 0);
                         grid.Children.Add(lb);
 
                         TextBox tb = new TextBox();
@@ -219,6 +382,7 @@ namespace DIP
                         grid.Children.Clear();
                         Label lb = new Label();
                         lb.Content = "宽缩小幅度（0-1）:";
+                        lb.Margin = new Thickness(10, 0, 0, 0);
                         lb.VerticalAlignment = VerticalAlignment.Center;
                         grid.Children.Add(lb);
 
@@ -258,6 +422,8 @@ namespace DIP
                     {
                         grid.Children.Clear();
                         Label lb = new Label();
+                        lb.Margin = new Thickness(10, 0, 0, 0);
+
                         lb.Content = "宽放大幅度（＞1）:";
                         lb.VerticalAlignment = VerticalAlignment.Center;
                         grid.Children.Add(lb);
@@ -299,6 +465,8 @@ namespace DIP
                         grid.Children.Clear();
                         Label lb = new Label();
                         lb.Content = "宽错切幅度:";
+                        lb.Margin = new Thickness(10, 0, 0, 0);
+
                         lb.VerticalAlignment = VerticalAlignment.Center;
                         grid.Children.Add(lb);
 
@@ -338,6 +506,8 @@ namespace DIP
                     {
                         grid.Children.Clear();
                         Label lb = new Label();
+                        lb.Margin = new Thickness(10, 0, 0, 0);
+
                         lb.Content = "希望拓展的灰度范围:";
                         lb.VerticalAlignment = VerticalAlignment.Center;
                         grid.Children.Add(lb);
@@ -406,7 +576,155 @@ namespace DIP
                     }
                     else if (txt == "直方图均衡化")
                     {
+                        grid.Children.Clear();
                         Equalization();
+                    }
+                    else if (txt == "高斯噪声")
+                    {
+                        grid.Children.Clear();
+                        Label lb = new Label();
+                        lb.Content = "高斯噪声强度:";
+                        lb.Margin = new Thickness(10, 0, 0, 0);
+
+                        lb.VerticalAlignment = VerticalAlignment.Center;
+                        grid.Children.Add(lb);
+
+                        TextBox tba = new TextBox();
+                        tba.Width = 40;
+                        tba.Height = 20;
+                        tba.Margin = new Thickness(10, 0, 0, 0);
+                        if (FindName("tbk") != null)
+                            grid.UnregisterName("tbk");
+                        grid.RegisterName("tbk", tba);
+                        grid.Children.Add(tba);
+
+                        Button btn = new Button();
+                        btn.Margin = new Thickness(20, 20, 20, 20);
+                        btn.Content = "确认";
+                        btn.Height = 20;
+                        btn.Width = 50;
+                        btn.Click += Button_Click;
+                        grid.Children.Add(btn);
+                    }
+                    else if (txt == "椒盐噪声")
+                    {
+                        grid.Children.Clear();
+                        Label lb = new Label();
+                        lb.Margin = new Thickness(10, 0, 0, 0);
+
+                        lb.Content = "信噪比:";
+                        lb.VerticalAlignment = VerticalAlignment.Center;
+                        grid.Children.Add(lb);
+
+                        TextBox tbw = new TextBox();
+                        tbw.Width = 40;
+                        tbw.Height = 20;
+                        tbw.Margin = new Thickness(10, 0, 20, 0);
+                        if (FindName("SNR") != null)
+                            grid.UnregisterName("SNR");
+                        grid.RegisterName("SNR", tbw);
+                        grid.Children.Add(tbw);
+
+                        Label lb2 = new Label();
+                        lb2.Content = "暗点概率:";
+                        lb2.VerticalAlignment = VerticalAlignment.Center;
+                        lb2.Margin = new Thickness(20, 0, 0, 0);
+                        grid.Children.Add(lb2);
+
+                        TextBox tbh = new TextBox();
+                        tbh.Width = 40;
+                        tbh.Height = 20;
+                        tbh.Margin = new Thickness(10, 0, 20, 0);
+                        if (FindName("pa") != null)
+                            grid.UnregisterName("pa");
+                        grid.RegisterName("pa", tbh);
+                        grid.Children.Add(tbh);
+
+                        Button btn = new Button();
+                        btn.Margin = new Thickness(20, 20, 20, 20);
+                        btn.Content = "确认";
+                        btn.Height = 20;
+                        btn.Width = 50;
+                        btn.Click += Button_Click;
+                        grid.Children.Add(btn);
+                    }
+                    else if (txt == "均值滤波")
+                    {
+                        grid.Children.Clear();
+                        EvenFilter();
+                    }
+                    else if (txt=="中值滤波")
+                    {
+                        grid.Children.Clear();
+                        MidFilter();
+                    }
+                    else if (txt=="二值化")
+                    {
+                        grid.Children.Clear();
+                        Label lb = new Label();
+                        lb.Content = "二值化阈值:";
+                        lb.Margin = new Thickness(10, 0, 0, 0);
+
+                        lb.VerticalAlignment = VerticalAlignment.Center;
+                        grid.Children.Add(lb);
+
+                        TextBox tba = new TextBox();
+                        tba.Width = 40;
+                        tba.Height = 20;
+                        tba.Margin = new Thickness(10, 0, 0, 0);
+                        if (FindName("tbk") != null)
+                            grid.UnregisterName("tbk");
+                        grid.RegisterName("tbk", tba);
+                        grid.Children.Add(tba);
+
+                        Button btn = new Button();
+                        btn.Margin = new Thickness(20, 20, 20, 20);
+                        btn.Content = "确认";
+                        btn.Height = 20;
+                        btn.Width = 50;
+                        btn.Click += Button_Click;
+                        grid.Children.Add(btn);
+                    }
+                    else if (txt=="二值图像去噪")
+                    {
+                        grid.Children.Clear();
+                        BinaryFilter();
+                    }
+                    else if (txt== "消除孤立黑像素点")
+                    {
+                        grid.Children.Clear();
+                        BinIsoRemove();
+                        
+                    }
+                    else if(txt == "选择式掩膜滤波")
+                    {
+                        grid.Children.Clear();
+                        LSMF();
+                    }
+                    else if(txt=="KNN平滑滤波")
+                    {
+                        grid.Children.Clear();
+                        KNNFilter(3, 5);
+                    }
+                    else if(txt== "双向梯度锐化")
+                    {
+                        grid.Children.Clear();
+                        BidirectionalFirstOrderDifferential();
+                    }
+                    else if(txt == "Roberts算子锐化")
+                    {
+                        grid.Children.Clear();
+                        Roberts();
+                    }
+                    else if(txt== "Sobel算子锐化")
+                    {
+                        grid.Children.Clear();
+                        Sobel();
+                    }
+                    else if(txt== "Laplacian算子锐化")
+                    {
+                        grid.Children.Clear();
+                        Laplacian();
                     }
                 }
             }

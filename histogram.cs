@@ -42,7 +42,8 @@ namespace DIP
             for (int i=0;i<bmpHist.Width;i++)
                 for(int j=0;j<bmpHist.Height;j++)
                 {
-                    byte temp = bmpHist.GetPixel(i, j).G;
+                    Color color = bmpHist.GetPixel(i, j);
+                    byte temp = (byte)(0.299 * color.R + 0.587 * color.G + 0.114 * color.B);
                     countPixel[temp]++;
                 }
         }
