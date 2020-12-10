@@ -13,7 +13,12 @@
 
                 <MenuItem Header="文件" Height="30">
                     <MenuItem Header="打开图片"></MenuItem>
+                    <MenuItem Header="保存图片"></MenuItem>
                     <MenuItem Header="原图信息"></MenuItem>
+                </MenuItem>
+                <MenuItem Header="编辑" Height="30">
+                    <MenuItem x:Name="undo" IsEnabled="False" Header="撤销"></MenuItem>
+                    <MenuItem x:Name="redo" IsEnabled="False" Header="重做"></MenuItem>
                 </MenuItem>
                 <MenuItem Header="几何变换" Height="30">
                     <MenuItem Header="放大"></MenuItem>
@@ -36,6 +41,7 @@
                     <Separator></Separator>
                     <MenuItem Header="均值滤波"></MenuItem>
                     <MenuItem Header="中值滤波"></MenuItem>
+                    <MenuItem Header="高斯平滑滤波"></MenuItem>
                     <Separator></Separator>
                     <MenuItem Header="二值化"></MenuItem>
                     <MenuItem Header="二值图像去噪"></MenuItem>
@@ -44,14 +50,16 @@
                     <MenuItem Header="选择式掩膜滤波"></MenuItem>
                     <MenuItem Header="KNN平滑滤波"></MenuItem>
                 </MenuItem>
-                <MenuItem Header="图像锐化">
-                    <MenuItem Header="双向梯度锐化"></MenuItem>
+                <MenuItem Header="边缘检测">
+                    <MenuItem Header="双向梯度算子"></MenuItem>
                     <Separator></Separator>
-                    <MenuItem Header="Roberts算子锐化"></MenuItem>
-                    <MenuItem Header="Sobel算子锐化"></MenuItem>
+                    <MenuItem Header="Roberts算子"></MenuItem>
+                    <MenuItem Header="Sobel算子"></MenuItem>
                     <Separator></Separator>
-                    <MenuItem Header="Laplacian算子锐化"></MenuItem>
-
+                    <MenuItem Header="Laplacian算子"></MenuItem>
+                    <MenuItem Header="Wallis算子"></MenuItem>
+                    <Separator></Separator>
+                    <MenuItem Header="LoG算子"></MenuItem>
                 </MenuItem>
             </Menu>
             <Border BorderBrush="LightGray" DockPanel.Dock="Left" BorderThickness="0,0,1,0"/>

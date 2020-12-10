@@ -11,87 +11,6 @@ using System.Windows.Media.Imaging;
 
 namespace DIP
 {
-
-    class EditOp
-    {
-        int[,,] dif;
-        int width, height;
-
-        EditOp(int w, int h)
-        {
-            width = w;
-            height = h;
-            dif = new int[w, h, 4];
-        }
-
-        EditOp(ref Bitmap old, ref Bitmap now)
-        {
-            if(old.Width == now.Width && old.Height == now.Height)
-            {
-                width = old.Width;
-                height = now.Width;
-                dif = new int[width, height, 4];
-
-                for(int i=0;i<width;i++)
-                {
-                    for(int j=0;j<width;i++)
-                    {
-                        Color c1 = old.GetPixel(i, j), c2 = now.GetPixel(i, j);
-                        dif[i, j, 0] = c2.R - c1.R;
-                        dif[i, j, 1] = c2.G - c1.G;
-                        dif[i, j, 2] = c2.B - c1.B;
-                        dif[i, j, 3] = c2.A - c1.A;
-                    }
-                }
-
-            }
-            else
-            {
-                width = now.Width;
-                height = now.Height;
-                dif = new int[width, height, 4];
-                for(int i=0;i<width;i++)
-                {
-                    for(int j=0;j<height;j++)
-                    {
-                        Color c = old.GetPixel(i, j);
-                        dif[i, j, 0] = c.R;
-                        dif[i, j, 1] = c.G;
-                        dif[i, j, 2] = c.B;
-                        dif[i, j, 3] = c.A;
-                    }
-                }
-            }
-
-        }
-
-        Bitmap Undo(ref Bitmap now)
-        {
-            Bitmap res = new Bitmap(width, height);
-            if (width == now.Width && height == now.Height)
-            { 
-                for(int i=0;i<width;i++)
-                {
-                    for(int j=0;j<height;j++)
-                    {
-                        Color c = now.GetPixel(i, j);
-                        res.SetPixel(i, j, 
-                            Color.FromArgb(c.A - dif[i, j, 4], c.R - dif[i, j, 0], c.G - dif[i, j, 1], c.B - dif[i, j, 2]));
-                    }
-                }
-                return res;
-            }
-            for(int i=0;i<width;i++)
-            {
-                for(int j=0;j<height;j++)
-                {
-                    res.SetPixel(i, j, Color.FromArgb(dif[i, j, 3], dif[i, j, 0], dif[i, j, 1], dif[i, j, 2]));
-                }
-            }
-            return res; 
-        }
-    }
-
     /// <summary>
     /// MainWindow.xaml 的交互逻辑
     /// </summary>
@@ -102,12 +21,12 @@ namespace DIP
         IntPtr bip;
         // 状态、 原图信息
         string status, info;
-
+        Operation op;
         
 
         public MainWindow()
         {
-            FileStream fs = new FileStream("E:\\test3.bmp", FileMode.Open);
+            FileStream fs = new FileStream("E:\\test.bmp", FileMode.Open);
             bmp = new Bitmap(fs);
             bip = bmp.GetHbitmap();
             fs.Close();
@@ -287,6 +206,32 @@ namespace DIP
                     }
                 }
             }
+            else if(txt=="撤销")
+            {
+                Bitmap bmp_ = ((Operation)EditOps[OpPtr-1]).Undo(ref bmp);
+                --OpPtr;
+                if (OpPtr == 0)
+                    undo.IsEnabled = false;
+                else undo.IsEnabled = true;
+
+                if (OpPtr < EditOps.Count)
+                    redo.IsEnabled = true;
+                else redo.IsEnabled = true;
+                UpdateImg(ref bmp_, true);
+            }
+            else if(txt=="重做")
+            {
+                Bitmap bmp_ = ((Operation)EditOps[OpPtr]).Redo(ref bmp);
+                ++OpPtr;
+                if (OpPtr > 0)
+                    undo.IsEnabled = true;
+                else undo.IsEnabled = true;
+
+                if (OpPtr < EditOps.Count)
+                    redo.IsEnabled = true;
+                else redo.IsEnabled = false;
+                UpdateImg(ref bmp_, true);
+            }
             else if(txt=="灰度化")
             {
                 if(bmp==null)
@@ -304,36 +249,16 @@ namespace DIP
                 HistForm histForm = new HistForm(bmp);
                 histForm.Show();
             }
+            else if (txt == "保存图片")
+            {
+                SaveImage();
+            }
             else
             {
                 status = txt;
                 if (txt == "打开图片")
                 {
-                    OpenFileDialog openFileDialog = new OpenFileDialog();
-                    openFileDialog.Title = "选择位图源文件";
-                    openFileDialog.Filter = ".bmp|*.bmp";
-                    openFileDialog.FileName = string.Empty;
-                    openFileDialog.FilterIndex = 1;
-                    openFileDialog.Multiselect = false;
-                    openFileDialog.RestoreDirectory = true;
-                    if (openFileDialog.ShowDialog() == false)
-                    {
-                        return;
-                    }
-                    string txtFile = openFileDialog.FileName;
-                    FileStream fs = new FileStream(txtFile, FileMode.Open);
-                    Bitmap b2 = new Bitmap(fs);
-                    fs.Close();
-                    BitmapSource bitmapSource = bmp2img(ref b2);
-                    img.Source = bitmapSource;
-                    status = "原图信息";
-                    grid.Children.Clear();
-                    TextBlock tb = new TextBlock();
-                    tb.Margin = new Thickness(15, 10, 10, 10);
-                    tb.FontSize = 14;
-                    info = getInfo(txtFile);
-                    tb.Text = info;
-                    grid.Children.Add(tb);
+                    OpenImage();
                 }
                 else
                 {
@@ -347,7 +272,7 @@ namespace DIP
                         grid.Children.Clear();
                         TextBlock tb = new TextBlock();
                         tb.Margin = new Thickness(15, 10, 10, 10);
-                        tb.FontSize = 16;
+                        tb.FontSize = 14;
                         tb.Text = info;
                         grid.Children.Add(tb);
                     }
@@ -658,6 +583,11 @@ namespace DIP
                         grid.Children.Clear();
                         MidFilter();
                     }
+                    else if(txt=="高斯平滑滤波")
+                    {
+                        grid.Children.Clear();
+                        GaussFilter();
+                    }
                     else if (txt=="二值化")
                     {
                         grid.Children.Clear();
@@ -706,25 +636,35 @@ namespace DIP
                         grid.Children.Clear();
                         KNNFilter(3, 5);
                     }
-                    else if(txt== "双向梯度锐化")
+                    else if(txt== "双向梯度算子")
                     {
                         grid.Children.Clear();
                         BidirectionalFirstOrderDifferential();
                     }
-                    else if(txt == "Roberts算子锐化")
+                    else if(txt == "Roberts算子")
                     {
                         grid.Children.Clear();
                         Roberts();
                     }
-                    else if(txt== "Sobel算子锐化")
+                    else if(txt== "Sobel算子")
                     {
                         grid.Children.Clear();
                         Sobel();
                     }
-                    else if(txt== "Laplacian算子锐化")
+                    else if(txt== "Laplacian算子")
                     {
                         grid.Children.Clear();
                         Laplacian();
+                    }
+                    else if(txt=="Wallis算子")
+                    {
+                        grid.Children.Clear();
+                        Wallis();
+                    }
+                    else if(txt=="LoG算子")
+                    {
+                        grid.Children.Clear();
+                        LoG();
                     }
                 }
             }

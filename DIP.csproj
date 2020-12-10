@@ -77,7 +77,12 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="operation.cs" />
+    <Compile Include="operations\BasicOps.cs" />
+    <Compile Include="operations\Ch3.cs" />
+    <Compile Include="operations\Ch4.cs" />
+    <Compile Include="operations\Ch5.cs" />
+    <Compile Include="operations\Ch6.cs" />
+    <Compile Include="operations\Ch7.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
