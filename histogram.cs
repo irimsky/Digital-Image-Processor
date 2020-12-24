@@ -56,7 +56,6 @@ namespace DIP
         {
             //获取Graphics对象
             Graphics g = e.Graphics;
-
             //创建一个宽度为1的黑色钢笔
             Pen curPen = new Pen(Brushes.Black, 1);
 

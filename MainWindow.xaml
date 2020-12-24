@@ -61,6 +61,12 @@
                     <Separator></Separator>
                     <MenuItem Header="LoG算子"></MenuItem>
                 </MenuItem>
+                <MenuItem Header="图像分割">
+                    <MenuItem Header="迭代阈值分割"></MenuItem>
+                    <MenuItem Header="灰度-局部灰度均值散布图"></MenuItem>
+                    <MenuItem Header="轮廓提取法"></MenuItem>
+                    <MenuItem Header="二值图像测量"></MenuItem>
+                </MenuItem>
             </Menu>
             <Border BorderBrush="LightGray" DockPanel.Dock="Left" BorderThickness="0,0,1,0"/>
 

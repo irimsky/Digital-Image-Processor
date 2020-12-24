@@ -15,7 +15,7 @@ namespace DIP
         /// <summary>
         /// 将图片灰度化
         /// </summary>
-        private void Gray()
+        private void Gray(bool showHist = false)
         {
             Bitmap bmp_ = new Bitmap(bmp.Width, bmp.Height);
             for (int i = 0; i < bmp.Width; i++)
@@ -28,8 +28,10 @@ namespace DIP
                 }
             }
             UpdateImg(ref bmp_);
-            HistForm histForm = new HistForm(bmp);
-            histForm.Show();
+            if (showHist) { 
+                HistForm histForm = new HistForm(bmp);
+                histForm.Show();
+            }
         }
 
         /// <summary>

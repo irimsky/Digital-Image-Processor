@@ -26,7 +26,7 @@ namespace DIP
 
         public MainWindow()
         {
-            FileStream fs = new FileStream("E:\\test.bmp", FileMode.Open);
+            FileStream fs = new FileStream("E:\\test3.bmp", FileMode.Open);
             bmp = new Bitmap(fs);
             bip = bmp.GetHbitmap();
             fs.Close();
@@ -240,9 +240,8 @@ namespace DIP
                     return;
                 }
                 grid.Children.Clear();
-                Gray();
+                Gray(true);
                 
-
             }
             else if (txt == "灰度直方图")
             {
@@ -622,12 +621,14 @@ namespace DIP
                     }
                     else if (txt== "消除孤立黑像素点")
                     {
+                        Gray();
                         grid.Children.Clear();
                         BinIsoRemove();
                         
                     }
                     else if(txt == "选择式掩膜滤波")
                     {
+                        Gray();
                         grid.Children.Clear();
                         LSMF();
                     }
@@ -638,33 +639,62 @@ namespace DIP
                     }
                     else if(txt== "双向梯度算子")
                     {
+                        Gray();
                         grid.Children.Clear();
                         BidirectionalFirstOrderDifferential();
                     }
                     else if(txt == "Roberts算子")
                     {
+                        Gray();
                         grid.Children.Clear();
                         Roberts();
                     }
                     else if(txt== "Sobel算子")
                     {
+                        Gray();
                         grid.Children.Clear();
                         Sobel();
                     }
                     else if(txt== "Laplacian算子")
                     {
+                        Gray();
                         grid.Children.Clear();
                         Laplacian();
                     }
                     else if(txt=="Wallis算子")
                     {
+                        Gray();
                         grid.Children.Clear();
                         Wallis();
                     }
                     else if(txt=="LoG算子")
                     {
+                        Gray();
                         grid.Children.Clear();
                         LoG();
+                    }
+                    else if(txt=="迭代阈值分割")
+                    {
+                        Gray();
+                        grid.Children.Clear();
+                        IterativeThresholdSegmentation();
+                    }
+                    else if(txt == "灰度-局部灰度均值散布图")
+                    {
+                        Gray();
+                        grid.Children.Clear();
+                        LocalGrayAverage();
+                    }
+                    else if(txt== "轮廓提取法")
+                    {
+                        Gray();
+                        grid.Children.Clear();
+                        EdgeExtraction();
+                    }
+                    else if(txt=="二值图像测量")
+                    {
+                        IterativeThresholdSegmentation();
+                        MeasureBinary();
                     }
                 }
             }
