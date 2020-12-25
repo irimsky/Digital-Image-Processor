@@ -26,7 +26,7 @@ namespace DIP
 
         public MainWindow()
         {
-            FileStream fs = new FileStream("E:\\test3.bmp", FileMode.Open);
+            FileStream fs = new FileStream("./test3.bmp", FileMode.Open);
             bmp = new Bitmap(fs);
             bip = bmp.GetHbitmap();
             fs.Close();
