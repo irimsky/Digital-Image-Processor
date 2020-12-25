@@ -1,68 +1,37 @@
+数字图像处理大作业
+
+使用C# 从底层像素级别实现数字图像处理课上所学的部分算法（尽量不使用封装好的现成的库）
+
+
+
+**GitHub源码**：[https://github.com/irimsky/DIP_Exp](https://github.com/irimsky/DIP_Exp)
+
+
+
+注：
+
+- 本项目将使用.NET中 [System.Drawing.Bitmap](https://docs.microsoft.com/zh-cn/dotnet/api/system.drawing.bitmap?view=dotnet-plat-ext-3.1) 类来作为位图的数据结构
+
+
+
 [TOC]
 
-本项目全部**源代码**：https://github.com/irimsky/Digital-Image-Processor
+
+
+# 位图文件操作
 
 
 
-# 实验一  位图的读取与显示
+## 读取位图头文件
 
-
-
-## 一.  实验任务
-
-1. BMP位图属性的读取
-2. BMP位图的显示
-
-
-
-## 二.  算法原理
-
-### 1. BMP位图属性的读取
-
-位图文件的数据格式如下：
-
-|            | **偏移量** | **域的名称**       |  **大小**  |                           **内容**                           |
-| ---------- | :--------: | :----------------- | :--------: | :----------------------------------------------------------: |
-| 图象文件头 |   0000h    | 文件标识           |  2 bytes   |                两字节的内容用来识别位图的类型                |
-|            |   0002h    | File Size          |   1dword   |                  用字节表示的整个文件的大小                  |
-|            |   0006h    | Reserved           |  1 dword   |                      保留，必须设置为0                       |
-|            |   000Ah    | Bitmap Data Offset |  1 dword   | 从文件开始到位图数据开始之间的数据(bitmap data)之间的偏移量  |
-|            |   000Eh    | Bitmap Header Size |  1 dword   | 位图信息头(Bitmap Info Header)的长度，用来描述位图的颜色、压缩方法等。 |
-|            |   0012h    | Width              |  1 dword   |                   位图的宽度，以象素为单位                   |
-|            |   0016h    | Height             |  1 dword   |                   位图的高度，以象素为单位                   |
-|            |   001Ah    | Planes             |   1 word   |                  位图的位面数，该值将总是1                   |
-| 图象信息头 |   001Ch    | Bits Per Pixel     |   1 word   | 每个象素的位数。**0** - JPEG图、**1** - 单色位图、**4** - 16 色位图、**8** - 256 色位图、**16** - 16bit 高彩色位图、**24** - 24bit 真彩色位图、**32** - 32bit 增强型真彩色位图 |
-|            |   001Eh    | Compression        |  1 dword   |                           压缩说明                           |
-|            |   0022h    | Bitmap Data Size   |  1 dword   |       用字节数表示的位图数据的大小。该数必须是4的倍数        |
-|            |   0026h    | HResolution        |  1 dword   |                  用象素/米表示的水平分辨率                   |
-|            |   002Ah    | VResolution        |  1 dword   |                  用象素/米表示的垂直分辨率                   |
-|            |   002Eh    | Colors             |  1 dword   |      位图使用的颜色数。如8-比特/象素表示为100h或者 256.      |
-|            |   0032h    | Important Colors   |  1 dword   | 指定重要的颜色数。当该域的值等于颜色数时（或者等于0时），表示所有颜色都一样重要 |
-| 调色板数据 |     -      | Palette            | N * 4 byte |                         调色板规范。                         |
-| 图象数据   |     -      | Bitmap Data        | xxx bytes  |                                                              |
-
-### 2. BMP位图的显示
-
-​		本项目将使用**.NET**中 [System.Drawing.Bitmap](https://docs.microsoft.com/zh-cn/dotnet/api/system.drawing.bitmap?view=dotnet-plat-ext-3.1) 类来作为位图的数据结构。同时使用**WPF**来实现前段界面，以及用其中的控件`image`来展示位图。
-
-
-
-![展示](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201224233902950.png?x-oss-process=image/resize,p_90)
-
-
-
-
-
-## 三. 实验代码
-
-1. BMP位图属性的读取
+位图文件格式分析参考：[https://blog.csdn.net/guanchanghui/article/details/1172092](https://blog.csdn.net/guanchanghui/article/details/1172092)
 
 ```csharp
 /// <summary>
 /// 获取打开的图片的信息
 /// </summary>
 /// <param name="path">图片路径</param>
-/// <returns>图片信息字符串</returns>
+/// <returns></returns>
 private string getInfo(string path)
 {
     FileStream fs = new FileStream(path, FileMode.Open);
@@ -72,15 +41,14 @@ private string getInfo(string path)
     byte[] bmpdata = new byte[fs.Length];
     fs.Read(bmpdata, 0, bmpdata.Length);
     fs.Close();
-    res += "■ 位图文件名称：" + path + "\n";
-    res += "■ 位图文件类型：";
+    res += "位图文件名称：" + path + "\n";
+    res += "位图文件类型：";
     res += (char)bmpdata[0];
     res += (char)bmpdata[1];
     res += "\n";
-    res += string.Format("■ 位图文件的大小：{0} \n", bmpdata.Length);
-    res += string.Format("■ 位图的宽度：{0}点\n", bmpdata[18] + (bmpdata[19] << 8) + (bmpdata[20] << 16) + (bmpdata[21] << 24));
-    res += string.Format("■ 位图的高度：{0}点\n", bmpdata[22] + (bmpdata[23] << 8) + (bmpdata[24] << 16) + (bmpdata[25] << 24));
-    res += "■ ";
+    res += string.Format("位图文件的大小：{0} \n", bmpdata.Length);
+    res += string.Format("位图的宽度：{0}点\n", bmpdata[18] + (bmpdata[19] << 8) + (bmpdata[20] << 16) + (bmpdata[21] << 24));
+    res += string.Format("位图的高度：{0}点\n", bmpdata[22] + (bmpdata[23] << 8) + (bmpdata[24] << 16) + (bmpdata[25] << 24));
     switch (bmpdata[16 + 12] + (bmpdata[16 + 13] << 8))
     {
         case 0: res += "JPEG图"; break;
@@ -96,56 +64,15 @@ private string getInfo(string path)
 }
 ```
 
-2. BMP位图的显示
-
-```csharp
-/// <summary>
-/// 展示更新image
-/// </summary>
-private void UpdateImg(ref Bitmap bmp_)
-{ 
-    DeleteObject(bip);
-    bmp = (Bitmap)bmp_.Clone();
-    bip = bmp.GetHbitmap();
-    IntPtr ip = bmp_.GetHbitmap();
-    DeleteObject(ip);
-    BitmapSource bitmapSource = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
-        bip, IntPtr.Zero, Int32Rect.Empty,
-        BitmapSizeOptions.FromEmptyOptions());
-    img.Source = bitmapSource;
-}
-```
-
-
-
-## 四. 完成体会
-
-​		虽然实验使用的是现有的封装好的Bitmap类来实现位图的操作，但之后将尽量不使用现有的库函数操作，而是从**底层像素**级别来实现课上所学算法。
+![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201224233902950.png?x-oss-process=image/resize,p_70)
 
 
 
 
 
-# 实验二 图像的几何变换
+# 几何变换
 
-
-
-## 一. 实验任务
-
-1. 旋转
-2. 缩小
-3. 放大
-4. 错切
-
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/20201226014811.png)
-
-
-
-## 二. 算法原理
-
-
-
-### 1. 旋转 —— 反变换公式法
+## 旋转-反变换公式法
 
 课上讲了三种旋转方法
 
@@ -161,112 +88,19 @@ private void UpdateImg(ref Bitmap bmp_)
 
 - 基本原理：从新图像的像素点坐标反过来求其所对应的原图像的像素点的坐标。
 
-    ![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/rotate.png?x-oss-process=image/resize,p_50)
+  ![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/rotate.png?x-oss-process=image/resize,p_50)
 
-    其中$x^{'}、y^{'}$为新图像中的坐标，$x、y$为原图像中的坐标
+  其中$x^{'}、y^{'}$为新图像中的坐标，$x、y$为原图像中的坐标
 
-    
+  
 
 - 步骤：
 
-    先确定画布大小→确定新图像坐标→计算出对应的原图像坐标。
+  先确定画布大小→确定新图像坐标→计算出对应的原图像坐标。
 
-    这样可将**原图像坐标**的像素值对应到**新图像**中。
-
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201224234157202.png?x-oss-process=image/resize,p_70)
-
-### 2. 缩小 —— 局部均值缩小法
-
-等间隔采样缩小法虽然简单，然而对于没有采样到的像素点的信息无法反映到新图中，因此会有失真。为解决这个问题，引入基于局部均值的图像缩小法。
+  这样可将**原图像坐标**的像素值对应到**新图像**中。
 
 
-
-步骤：
-
-1. 计算新图像的大小，计算采样间隔$Δi=1/k1，Δj=1/k2$。 k1、k2是缩小幅度
-2. 对新图像的像素$g(i, j)$，计算其在原图像中对应的子块$f^{(i,j)}$： 
-
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/minimize1.png?x-oss-process=image/resize,p_80)
-
-3.  $g(i, j) = f^{(i,j)}$的均值
-
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/minimize2%20(2).png?x-oss-process=image/resize,p_50)
-
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/minimize3.png?x-oss-process=image/resize,p_50)
-
-
-
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201224234315638.png?x-oss-process=image/resize,p_70)
-
-
-
-### 3. 放大 —— 双线性插值放大算法
-
-放大必定会导致图像空穴的产生，需要使用**插值**填补，所以这里采用效果比较好的**双线性插值法**
-
-双线性插值法假设：
-
-1. 首先灰度级在纵向方向上是线性变化的  
-
-2. 然后假定灰度级在横向方向上也是线性变化的。
-
-
-
-步骤：
-
-1. 先按照基于$G(i,j)=F(i*c1,\ j*c2)$，确定每一个原图像的像素在新图像中对应的子块。
-
-    ![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/max1.png)
-
-    
-
-2. 对新图像中每一个子块，仅对其一个像素进行填充。在每个子块中选取一个填充像素的方法如下：
-
-    对右下角的子块，选取子块中右下角的像素；
-
-    对末列、非末行子块，选取子块中的右上角像素；
-
-    对末行、非末列子块，选取子块中的左下角像素；
-
-    对剩余的子块，选取子块中的左上角像素。
-
-    ![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/max2.png?x-oss-process=image/resize,p_40)
-
-3. 通过双线性插值方法计算剩余像素的值。
-
-    对所有填充像素所在列中的其他像素的值，可以根据该像素的上方与下方的已填充的像素值，采用双线性插值方法计算得到。 
-
-    ![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/max3.png?x-oss-process=image/crop,y_3/resize,p_50)
-
-    ![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/max4.png?x-oss-process=image/resize,p_40)
-
-    
-
-    对剩余像素的值，可以利用该像素的左方与右方的已填充像素的值，通过线性插值方法计算得到。
-
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/max5.png?x-oss-process=image/resize,p_50)
-
-​					![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/max6.png?x-oss-process=image/crop,y_3/resize,p_50)
-
-
-
-
-
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201224234512126.png?x-oss-process=image/resize,p_70)
-
-
-
-### 4. 错切
-
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/shear1.png?x-oss-process=image/resize,p_70)
-
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201224234732105.png?x-oss-process=image/resize,p_70)
-
-
-
-## 三. 实验代码
-
-1. 旋转
 
 ```csharp
 /// <summary>
@@ -346,9 +180,30 @@ private void rotate(double angle)
 }
 ```
 
+![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201224234157202.png?x-oss-process=image/resize,p_70)
 
 
-2. 缩小
+
+## 缩小-局部均值缩小法
+
+等间隔采样缩小法虽然简单，然而对于没有采样到的像素点的信息无法反映到新图中，因此会有失真。为解决这个问题，引入基于局部均值的图像缩小法。
+
+
+
+步骤：
+
+1. 计算新图像的大小，计算采样间隔$Δi=1/k1，Δj=1/k2$。k1、k2是缩小幅度
+2. 对新图像的像素$g(i, j)$，计算其在原图像中对应的子块$f^{(i,j)}$： 
+
+![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/minimize1.png)
+
+3.  $g(i, j) = f^{(i,j)}的均值$
+
+![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/minimize2%20(2).png?x-oss-process=image/resize,p_50)
+
+![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/minimize3.png?x-oss-process=image/resize,p_50)
+
+
 
 ```csharp
 /// <summary>
@@ -391,11 +246,64 @@ private void minimize(double k1, double k2)
     }
     UpdateImgimg(ref bmp_);
 }
+
 ```
 
+![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201224234315638.png?x-oss-process=image/resize,p_70)
 
 
-3. 放大
+
+## 放大-双线性插值放大算法
+
+放大必定会导致图像空穴的产生，需要使用**插值**填补，所以这里采用效果比较好的**双线性插值法**
+
+双线性插值法假设：
+
+1. 首先灰度级在纵向方向上是线性变化的  
+
+2. 然后假定灰度级在横向方向上也是线性变化的。
+
+
+
+步骤：
+
+1. 先按照基于$G(i,j)=F(i*c1,\ j*c2)$，确定每一个原图像的像素在新图像中对应的子块。
+
+   ![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/max1.png)
+
+   
+
+2. 对新图像中每一个子块，仅对其一个像素进行填充。在每个子块中选取一个填充像素的方法如下：
+
+   对右下角的子块，选取子块中右下角的像素；
+
+   对末列、非末行子块，选取子块中的右上角像素；
+
+   对末行、非末列子块，选取子块中的左下角像素；
+
+   对剩余的子块，选取子块中的左上角像素。
+
+   ![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/max2.png?x-oss-process=image/resize,p_40)
+
+3. 通过双线性插值方法计算剩余像素的值。
+
+   对所有填充像素所在列中的其他像素的值，可以根据该像素的上方与下方的已填充的像素值，采用双线性插值方法计算得到。 
+
+   ![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/max3.png?x-oss-process=image/crop,y_3/resize,p_60)
+
+   ![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/max4.png?x-oss-process=image/resize,p_60)
+
+   
+
+   对剩余像素的值，可以利用该像素的左方与右方的已填充像素的值，通过线性插值方法计算得到。
+
+![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/max5.png?x-oss-process=image/resize,p_60)
+
+​										      ![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/max6.png?x-oss-process=image/crop,y_3/resize,p_60)
+
+​			
+
+
 
 ```csharp
 /// <summary>
@@ -500,9 +408,15 @@ private void maximize(double k1, double k2)
 }
 ```
 
+![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201224234512126.png?x-oss-process=image/resize,p_70)
 
 
-4. 错切
+
+## 错切
+
+![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/shear1.png?x-oss-process=image/resize,p_70)
+
+![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/shear2.png?x-oss-process=image/resize,p_70/crop,y_3,x_3)
 
 ```csharp
 /// <summary>
@@ -558,31 +472,13 @@ private void shear(double c, double b)
 }
 ```
 
-
-
-## 四. 完成体会
-
-​		几何变换大多数实质上都是像素点的位置变换。通过实现了四个典型的几何变换，对位图像素的操作更加熟练。
+![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201224234732105.png?x-oss-process=image/resize,p_70)
 
 
 
+# 灰度变换
 
-
-# 实验三 图像的灰度变换
-
-
-
-## 一. 实验任务
-
-1. 灰度化
-2. 拓展压缩的线性灰度变换
-3. 直方图均衡化
-
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/20201226014911.png)
-
-## 二. 算法原理
-
-### 1. 灰度化与灰度直方图
+## 灰度化
 
 将彩色图片**灰度化**，只需要将每一个像素的RGB值都设置为一样的即可。
 
@@ -593,76 +489,6 @@ private void shear(double c, double b)
 $$Gray(i,j)=0299×R(i,j)+0.587×G(i,j)+0.114×B(i,j)$$
 
 
-
-**灰度直方图的绘制**使用winform的Paint函数。
-
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/gray.png)
-
-
-
-### 2. 拓展压缩的线性灰度变换
-
-由于图像的亮度范围不足或非线性可能会使图像的对比度不理想。
-
-所以采用图像灰度值变换方法，即改变图像像素的灰度值，以改变图像灰度的动态范围，增强图像的对比度。
-
-灰度变换分为线性变换 (正比或反比)和非线性变换。非线性变换有对数的(对数和反对数的)，幂次的(n次幂和n次方根变换) 。下面是一些灰度变换曲线。
-
-![用于图像增强的某些基本灰度变换函数](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/gray2.png?x-oss-process=image/resize,p_70)
-
-
-
-为了突出感兴趣目标所在的灰度区间，相对抑制那些不感兴趣的灰度空间，可采用**分段线性变换**
-
-在扩展感兴趣的[a,b]区间的同时，为了保留其他区间的灰度层次，也可以采用其它区间压缩的方法，既有扩有压，变换函数为
-
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/linegray.png)
-
-
-
-
-
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/linegray2.png)
-
-
-
-
-
-### 3. 直方图均衡化
-
-**直方图均衡化**是将原图像通过某种变换，得到一幅灰度直方图为均匀分布的新图像的方法。
-
-设图像均衡化处理后，图像的直方图是平直的，即各灰度级具有相同的出现频数(大体相同)，那么由于灰度级具有**均匀**的概率分布，图像看起来就更清晰了。
-
-**步骤**：
-
-1. 计算原图的灰度直方图
-
-设$f、g$分别为原图与处理后的图像，$N$为图像总体像素个数，统计$h(i)$为灰度 $i$ 的像素在原图中的个数。$0\le i\le255$
-
-
-
-2. 由原图直方图计算灰度分布概率
-
-原图的灰度分布概率 $hs(i) = h(i)/N$
-
-
-
-3. 计算图像各个灰度级的累积分布概率
-
-各灰度级的累计分布 $h_{p}(i) = \sum_{k=0}^{i}hs(k)$ 
-
-
-
-4. 进行直方图均衡化计算，得到新图像的灰度值
-
-$g(i,j)=255 * h_{p}(k)$
-
-
-
-## 三. 实验代码
-
-1. 灰度化
 
 ```csharp
 /// <summary>
@@ -688,7 +514,7 @@ private void Gray()
 
 
 
-**灰度直方图**的绘制：
+我们可以将**灰度直方图**绘制出来：
 
 ```csharp
 using System;
@@ -790,7 +616,37 @@ namespace DIP
 
 
 
-2. 拓展压缩的线性灰度变换
+![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/gray.png)
+
+
+
+## 拓展压缩的线性灰度变换
+
+由于图像的亮度范围不足或非线性可能会使图像的对比度不理想。
+
+所以采用图像灰度值变换方法，即改变图像像素的灰度值，以改变图像灰度的动态范围，增强图像的对比度。
+
+灰度变换分为线性变换 (正比或反比)和非线性变换。非线性变换有对数的(对数和反对数的)，幂次的(n次幂和n次方根变换) 。下面是一些灰度变换曲线。
+
+![用于图像增强的某些基本灰度变换函数](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/gray2.png?x-oss-process=image/resize,p_70)
+
+
+
+为了突出感兴趣目标所在的灰度区间，相对抑制那些不感兴趣的灰度空间，可采用**分段线性变换**
+
+在扩展感兴趣的[a,b]区间的同时，为了保留其他区间的灰度层次，也可以采用其它区间压缩的方法，既有扩有压，变换函数为
+
+![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/linegray.png)
+
+
+
+
+
+![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/linegray2.png)
+
+
+
+
 
 ```csharp
 /// <summary>
@@ -827,19 +683,46 @@ private void LinerGray(int a, int b, int c, int d)
         }
     }
     UpdateImgimg(ref bmp_);
-    // 展示灰度直方图
     HistForm histForm = new HistForm(bmp);
     histForm.Show();
 }
 ```
 
-
-
 ![变换后的图片与变换前（左前，右后）后的直方图](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/DIP/linegray3.png)
 
 
 
-3. 直方图均衡化
+
+
+## 直方图均衡化
+
+**直方图均衡化**是将原图像通过某种变换，得到一幅灰度直方图为均匀分布的新图像的方法。
+
+设图像均衡化处理后，图像的直方图是平直的，即各灰度级具有相同的出现频数(大体相同)，那么由于灰度级具有**均匀**的概率分布，图像看起来就更清晰了。
+
+**步骤**：
+
+1. 计算原图的灰度直方图
+
+设$f、g$分别为原图与处理后的图像，$N$为图像总体像素个数，统计$h(i)$为灰度 $i$ 的像素在原图中的个数。$0\le i\le255$
+
+
+
+2. 由原图直方图计算灰度分布概率
+
+原图的灰度分布概率 $hs(i) = h(i)/N$
+
+
+
+3. 计算图像各个灰度级的累积分布概率
+
+各灰度级的累计分布 $h_{p}(i) = \sum_{k=0}^{i}hs(k)$ 
+
+
+
+4. 进行直方图均衡化计算，得到新图像的灰度值
+
+$g(i,j)=255 * h_{p}(k)$
 
 ```csharp
 /// <summary>
@@ -891,59 +774,13 @@ private void Equalization()
 
 
 
-## 四. 完成体会
-
-​		 图像的灰度变换处理是图像增强处理技术中的一种非常基础、直接的空间域图像处理方法，也是图像数字化软件和图像显示软件的一个重要组成部分。
-
-​		对灰度变换的几个算法的实现让我对灰度变换加深了理解，尤其是直方图均衡化让我对其有了直观的感受。比较遗憾的是没能实现难度较高的同态滤波。
+# 噪声抑制
 
 
 
+## 添加噪声
 
-
-# 实验四 图像噪声的抑制
-
-
-
-## 一. 实验任务
-
-1. 添加噪声
-
-    1.1 高斯噪声
-
-    1.2 椒盐噪声
-
-2. 滤波去噪
-
-    2.1 均值滤波
-
-    2.2 中值滤波
-
-3. 边界保持平滑滤波器
-
-    3.1 灰度最小方差的均值滤波器
-
-    3.2 K近邻平滑滤波器
-
-4. 二值图像去噪
-
-    4.1 黑白点噪声滤波
-
-    4.2 消除孤立黑点
-
-
-
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/20201226015107.png)
-
-
-
-## 二. 算法原理
-
-
-
-### 1. 添加噪声
-
-#### 1.1 高斯噪声
+### 高斯噪声
 
 高斯噪声又称正态噪声。噪声位置是一定的，即每一点都有噪声，但噪声的幅值是随机的。
 
@@ -953,13 +790,58 @@ private void Equalization()
 
 ![高斯噪声概率密度函数](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/20201223114740.png?x-oss-process=image/resize,p_60)
 
+
+
+```csharp
+/// <summary>
+/// 为高斯噪声生成随机种子
+/// </summary>
+int GetRandomSeed()
+{
+    byte[] bytes = new byte[4];
+    System.Security.Cryptography.RNGCryptoServiceProvider rng = new System.Security.Cryptography.RNGCryptoServiceProvider();
+    rng.GetBytes(bytes);
+    return BitConverter.ToInt32(bytes, 0);
+}
+
+/// <summary>
+/// 为图片添加高斯噪声
+/// </summary>
+private void GaussNoise(int k)
+{
+    Random ran = new Random(GetRandomSeed());
+    Bitmap bmp_ = new Bitmap(bmp.Width, bmp.Height);
+    for (int i = 0; i < bmp.Width; i++)
+    {
+        for (int j = 0; j < bmp.Height; j++)
+        {
+            double r1 = ran.NextDouble();
+            double r2 = ran.NextDouble();
+            double result = Math.Sqrt((-2) * Math.Log(r2)) * Math.Sin(2 * Math.PI * r1);
+            result *= k;
+            Color c = bmp.GetPixel(i, j);
+
+            int rr = (int)(c.R + result),
+            gg = (int)(c.G + result),
+            bb = (int)(c.B + result);
+            if (rr > 255) rr = 255;
+            else if (rr < 0) rr = 0;
+            if (gg > 255) gg = 255;
+            else if (gg < 0) gg = 0;
+            if (bb > 255) bb = 255;
+            else if (bb < 0) bb = 0;
+            bmp_.SetPixel(i, j, Color.FromArgb(c.A, rr, gg, bb));
+        }
+    }
+    UpdateImg(ref bmp_);
+}
+```
+
 ![加噪声前后（k=16)](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225000201191.png)
 
 
 
-
-
-#### 1.2 椒盐噪声
+### 椒盐噪声
 
 椒盐噪声又称脉冲噪声。噪声的幅值基本相同，但噪声出现的位置是随机的。
 
@@ -969,15 +851,44 @@ $$p(z)=\begin{cases} P_{a} & \ {z=a}\\ P_{a} & \ {z=b}\\ P_{a} & \ {其他} \end
 
 ![椒盐噪声概率密度函数](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/20201223114807.png?x-oss-process=image/resize,p_60)
 
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225000352845.png)
+
+
+```csharp
+/// <summary>
+/// 为图片添加椒盐噪声
+/// </summary>
+/// <param name="SNR">信噪比</param>
+/// <param name="pa">图片为暗点的概率</param>
+private void SaltNoise(double SNR, double pa)
+{
+    // 噪声点的数量
+    int NP = (int)(bmp.Width * bmp.Height * (1 - SNR));
+    Bitmap bmp_ = new Bitmap(bmp);
+    Random rand = new Random();
+    for (int i = 0; i < NP; i++)
+    {
+        int r = rand.Next(0, bmp.Height), c = rand.Next(0, bmp.Width);
+        double prob = rand.NextDouble();
+        if (prob > pa)
+        {
+            bmp_.SetPixel(c, r, Color.FromArgb(255, 255, 255));
+        }
+        else
+        {
+            bmp_.SetPixel(c, r, Color.FromArgb(0, 0, 0));
+        }
+    }
+    UpdateImg(ref bmp_);
+}
+```
 
 
 
+![image-20201225000352845](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225000352845.png)
 
+## 滤波去噪
 
-### 2. 滤波去噪
-
-#### 2.1 均值滤波
+### 均值滤波
 
 **均值滤波**是指在图像上，对待处理的像素给定一个模板，该模板包括了其周围的邻近像素。将模板中的全体像素的均值来替代原来的像素值的方法。
 
@@ -1003,17 +914,39 @@ $$g(x,y)=\frac{1}{M}\sum_{(i,j)\in s}f(i,j)$$
 
 
 
-对高斯噪声：
+```csharp
+/// <summary>
+/// 均值滤波
+/// </summary>
+private void EvenFilter()
+{
+    Bitmap bmp_ = new Bitmap(bmp);
+    for (int i = 1; i < bmp.Width - 1; i++)
+    {
+        for (int j = 1; j < bmp.Height - 1; j++)
+        {
+            int rsum = 0, gsum = 0, bsum = 0;
+            for (int ii = -1; ii <= 1; ii++)
+            {
+                for(int jj = -1; jj <= 1; jj++)
+                {
+                    int x = i + ii, y = j + jj;
+                	Color c = bmp.GetPixel(x, y);
+                	rsum += c.R; gsum += c.G; bsum += c.B;
+                }
+            }
+            bmp_.SetPixel(i, j, Color.FromArgb(rsum / 9, gsum / 9, bsum / 9));
+        }
+    }
+    UpdateImg(ref bmp_);
+}
+```
 
 ![对高斯噪声](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225001613045.png)
 
-对椒盐噪声：
-
 ![对椒盐噪声](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225000759207.png)
 
-
-
-#### 2.2 中值滤波
+### 中值滤波
 
 N×N中值滤波器，计算灰度图像f中以像素$f(i，j)$为中心的N×N屏蔽窗口(N=3，5，7…)内灰度的中值为$u$，作$(i，j)=u$ 处理，$N$由用户给定。
 例如做3×3的模板，对9个数排序，取第5个数替代原来的像素值。
@@ -1028,28 +961,57 @@ N×N中值滤波器，计算灰度图像f中以像素$f(i，j)$为中心的N×N�
 
 ![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/20201223125722.png?x-oss-process=image/resize,p_50)
 
-
-
-对高斯噪声
+```csharp
+/// <summary>
+/// 中值滤波
+/// </summary>
+private void MidFilter()
+{
+    Bitmap bmp_ = new Bitmap(bmp);
+    for (int i = 1; i < bmp.Width - 1; i++)
+    {
+        for (int j = 1; j < bmp.Height - 1; j++)
+        {
+            ArrayList rarr = new ArrayList(),
+            garr = new ArrayList(),
+            barr = new ArrayList();
+            for (int ii = -1; ii <= 1; d++)
+            {
+                for(int jj=-1;jj<=1;jj++)
+                {
+                    int x = i + ii, y = j + jj;
+                	Color c = bmp.GetPixel(x, y);
+                	rarr.Add(c.R);
+                	garr.Add(c.G);
+                	barr.Add(c.B);
+                }
+            }
+            rarr.Sort();
+            garr.Sort();
+            barr.Sort();
+            bmp_.SetPixel(i, j, Color.FromArgb(Convert.ToInt32(rarr[4]),
+                                               Convert.ToInt32(garr[4]),
+                                               Convert.ToInt32(barr[4])));
+        }
+    }
+    UpdateImg(ref bmp_);
+}
+```
 
 ![对高斯噪声](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225001839431.png)
-
-对椒盐噪声：
 
 ![对椒盐噪声](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225000849004.png)
 
 
 
-
-
-以上结果可以看出：
+从以上结果可以看出：
 
 - 对于**椒盐噪声**，**中值滤波**效果优于**均值滤波**。因为中值滤波的原理是取合理的邻近像素值来替代噪声点。噪声的均值不为0，所以均值滤波不能很好地去除噪声点。
 - 对于**高斯噪声**，**均值滤波**效果优于**中值滤波**。因为高斯噪声是分布在每点像素上的。因为图像中的每点都是污染点，所中值滤波选不到合适的干净点。而且正态分布的均值为0，所以根据统计数学，均值可以消除噪声。
 
 
 
-### 3. 边界保持平滑滤波器
+## 边界保持平滑滤波器
 
 前面的均值和中值滤波处理结果可知，经过平滑（特别是均值）滤波处理之后，图像就会**变得模糊**。
 
@@ -1058,11 +1020,10 @@ N×N中值滤波器，计算灰度图像f中以像素$f(i，j)$为中心的N×N�
 在进行平滑处理时，首先判别当前像素是否为边界上的点：
 
 - 如果是，则不进行处理
+
 - 如果不是，则进行平滑处理
 
-
-
-#### 3.1 灰度最小方差的均值滤波器
+### 灰度最小方差的均值滤波器
 
 **灰度最小方差的均值滤波器**又称选择掩模滤波器。
 
@@ -1089,17 +1050,81 @@ N×N中值滤波器，计算灰度图像f中以像素$f(i，j)$为中心的N×N�
 
 
 
-对高斯噪声：
+```csharp
+/// <summary>
+/// 灰度最小方差均值滤波器
+/// </summary>
+private void LSMF()
+{
+    int[][,] dir = new int[9][,];
+    dir[0] = new int[,] {
+        {-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 0}, {0, 1}, {1, -1}, {1, 0}, {1, 1}
+    };
+    dir[1] = new int[,] {
+        {-1, -2}, {-1, -1}, {0, -2}, {0, -1}, {0, 0}, {1, -2}, {1, -1}
+    };
+    dir[2] = new int[,] {
+        {-2, -1}, {-2, 0}, {-2, 1}, {-1, -1}, {-1, 0}, {-1, 1}, {0, 0}
+    };
+    dir[3] = new int[,] {
+        {-1, 1}, {-1, 2}, {0, 0}, {0, 1}, {0, 2}, {1, 1}, {1, 2}
+    };
+    dir[4] = new int[,] {
+        {0, 0}, {1, -1}, {1, 0}, {1, 1}, {2, -1}, {2, 0}, {2, 1}
+    };
+    dir[5] = new int[,] {
+        {-2, -2}, {-2, -1}, {-1, -2}, {-1, -1}, {-1, 0}, {0, -1}, {0, 0}
+    };
+    dir[6] = new int[,] {
+        {-2, 1}, {-2, 2}, {-1, 0}, {-1, 1}, {-1, 2}, {0, 0}, {0, 1}
+    };
+    dir[7] = new int[,] {
+        {0, 0}, {0, 1}, {1, 0}, {1, 1}, {1, 2}, {2, 1}, {2, 2}
+    };
+    dir[8] = new int[,] {
+        {0, -1}, {0, 0}, {1, -2}, {1, -1}, {1, 0}, {2, -2}, {2, -1}
+    };
+
+    Bitmap bmp_ = new Bitmap(bmp);
+    for (int i = 2; i < bmp.Width - 2; i++)
+    {
+        for (int j = 2; j < bmp.Height - 2; j++)
+        {
+            double minsq = 1000000000;
+            int minavg = 0;
+            for (int d = 0; d < 9; d++)
+            {
+                double avg = 0, sq_dif = 0;
+                List<int> arr = new List<int>();
+                for (int dd = 0; dd < dir[d].Length; dd += 2)
+                {
+                    Color c = bmp.GetPixel(i + dir[d][dd / 2, 0], j + dir[d][dd / 2, 1]);
+                    arr.Add(c.R);
+                }
+                avg = arr.Average();
+                foreach (var r in arr)
+                {
+                    sq_dif += (r - avg) * (r - avg);
+                }
+                if (sq_dif < minsq)
+                {
+                    minsq = sq_dif;
+                    minavg = (int)avg;
+                }
+            }
+            bmp_.SetPixel(i, j, Color.FromArgb(minavg, minavg, minavg));
+        }
+    }
+    UpdateImg(ref bmp_);
+
+}
+```
 
 ![对高斯噪声](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225002049733.png)
 
-对椒盐噪声
-
 ![对椒盐噪声](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225001000852.png)
 
-
-
-#### 3.2 K近邻平滑滤波器
+### K近邻平滑滤波器
 
 K近邻(KNN)平滑滤波器的**核心**是：在一个与待处理像素邻近的范围内，寻找出其中像素值与之最接近的**K个邻点**(是指灰度上最邻近)，将该K个邻点的均值（或中值）替代原像素值。
 
@@ -1118,19 +1143,62 @@ K近邻(KNN)平滑滤波器的**核心**是：在一个与待处理像素邻近�
 
 
 
-对高斯噪声：
+```csharp
+/// <summary>
+/// KNN中值平滑滤波
+/// </summary>
+/// <param name="m">模板大小（奇数)</param>
+/// <param name="K">K</param>
+private void KNNFilter(int m, int K)
+{
+    if (m >= bmp.Width / 2 || K > m * m || m % 2 != 1)
+        return;
+    Bitmap bmp_ = new Bitmap(bmp);
+    int kernel = m / 2;
+    List<Tuple<int, int>> sort_list = new List<Tuple<int, int>>(m * m);
+    for (int i = kernel; i < bmp.Width - kernel; i++)
+    {
+        for (int j = kernel; j < bmp.Height - kernel; j++)
+        {
+            Color now = bmp.GetPixel(i, j);
+            sort_list.Clear();
+            for (int ii = i - kernel; ii <= i + kernel; ii++)
+            {
+                for (int jj = j - kernel; jj <= j + kernel; jj++)
+                {
+                    Color tmp = bmp.GetPixel(ii, jj);
+                    sort_list.Add(
+                        new Tuple<int, int>(
+                            Math.Abs(now.R - tmp.R),
+                            tmp.R
+                        )
+                    );
+                }
+            }
+
+            sort_list.Sort((x, y) =>
+                           {
+                               return x.Item1 - y.Item1;
+                           });
+            int sum = 0;
+
+            sum = sort_list[K / 2].Item2;
+            bmp_.SetPixel(i, j, Color.FromArgb(sum, sum, sum));
+        }
+    }
+    UpdateImg(ref bmp_);
+}
+```
 
 ![对高斯噪声](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225002148949.png)
-
-对椒盐噪声：
 
 ![对椒盐噪声](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225001058248.png)
 
 
 
-### 4.二值图像去噪
+## 二值图像去噪
 
-#### 4.1 黑白点噪声滤波
+### 黑白点噪声滤波
 
 **方法：**消去二值图像$f(i，j)$上的黑白的噪声，当$f(i，j)$周围的8个像素的平均值为$a$时，若$|f(i，j)-a|$的值在127.5以上，则对$f(i，j)$的黑白进行翻转，若不到127.5则$f(i，j)$不变。
 
@@ -1138,420 +1206,99 @@ K近邻(KNN)平滑滤波器的**核心**是：在一个与待处理像素邻近�
 
 
 
-#### 4.2 消除孤立黑点
+```csharp
+/// <summary>
+/// 二值图像去噪
+/// </summary>
+private void BinaryFilter()
+{
+    int[,] dir = new int[,] { { -1, -1 }, { -1, 0 }, { -1, 1 },
+                             { 0, -1 }, { 0, 1 },
+                             { 1, -1 },  {  1, 0 }, { 1,  1}
+                            };
+    Bitmap bmp_ = new Bitmap(bmp);
+    for (int i = 1; i < bmp.Width - 1; i++)
+    {
+        for (int j = 1; j < bmp.Height - 1; j++)
+        {
+            Color now = bmp.GetPixel(i, j);
+            double sum = 0;
+            for (int d = 0; d < 8; d++)
+            {
+                int xx = i + dir[d, 0], yy = j + dir[d, 1];
+                Color c = bmp.GetPixel(xx, yy);
+                sum += c.R;
+            }
+            sum /= 8;
+            if (Math.Abs(now.R - sum) > 127.5)
+                bmp_.SetPixel(i, j, Color.FromArgb(255 - now.R, 255 - now.R, 255 - now.R));
+        }
+    }
+    UpdateImg(ref bmp_);
+}
+```
+
+
+
+### 消除孤立黑点
 
 **方法：**
 
 - 4点邻域的情况下，若黑像素$f(i，j)$的上下左右4个像素全为白(0)，则$f(i，j)$也取为0。
+
 - 8点邻域的情况下，若黑像素$f(i，j)$的周围8个像素全为白(0)，则$f(i，j)$也取为0。
+
+
 
 ![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225003557489.png?x-oss-process=image/resize,p_80)
 
 
 
-## 三. 实验代码
-
-1. 添加噪声
-
-    1.1 高斯噪声
-
-    ```csharp
-    /// <summary>
-    /// 为高斯噪声生成随机种子
-    /// </summary>
-    int GetRandomSeed()
+```csharp
+/// <summary>
+/// 二值图像消除孤立点（四连通）
+/// </summary>
+private void BinIsoRemove()
+{
+    int[,] dir = new int[,] { { -1, 0 }, { 0, -1 }, { 0, 1 }, { 1, 0 } };
+    Bitmap bmp_ = new Bitmap(bmp);
+    for (int i = 1; i < bmp.Width - 1; i++)
     {
-        byte[] bytes = new byte[4];
-        System.Security.Cryptography.RNGCryptoServiceProvider rng = new System.Security.Cryptography.RNGCryptoServiceProvider();
-        rng.GetBytes(bytes);
-        return BitConverter.ToInt32(bytes, 0);
-    }
-    
-    /// <summary>
-    /// 为图片添加高斯噪声
-    /// </summary>
-    private void GaussNoise(int k)
-    {
-        Random ran = new Random(GetRandomSeed());
-        Bitmap bmp_ = new Bitmap(bmp.Width, bmp.Height);
-        for (int i = 0; i < bmp.Width; i++)
+        for (int j = 1; j < bmp.Height - 1; j++)
         {
-            for (int j = 0; j < bmp.Height; j++)
+            Color now = bmp.GetPixel(i, j);
+            if (now.R == 255)
+                continue;
+            bool flag = false;
+            for (int d = 0; d < 4; d++)
             {
-                double r1 = ran.NextDouble();
-                double r2 = ran.NextDouble();
-                double result = Math.Sqrt((-2) * Math.Log(r2)) * Math.Sin(2 * Math.PI * r1);
-                result *= k;
-                Color c = bmp.GetPixel(i, j);
-    
-                int rr = (int)(c.R + result),
-                gg = (int)(c.G + result),
-                bb = (int)(c.B + result);
-                if (rr > 255) rr = 255;
-                else if (rr < 0) rr = 0;
-                if (gg > 255) gg = 255;
-                else if (gg < 0) gg = 0;
-                if (bb > 255) bb = 255;
-                else if (bb < 0) bb = 0;
-                bmp_.SetPixel(i, j, Color.FromArgb(c.A, rr, gg, bb));
-            }
-        }
-        UpdateImg(ref bmp_);
-    }
-    ```
-
-    
-
-    1.2 椒盐噪声
-
-    ```csharp
-    /// <summary>
-    /// 为图片添加椒盐噪声
-    /// </summary>
-    /// <param name="SNR">信噪比</param>
-    /// <param name="pa">图片为暗点的概率</param>
-    private void SaltNoise(double SNR, double pa)
-    {
-        // 噪声点的数量
-        int NP = (int)(bmp.Width * bmp.Height * (1 - SNR));
-        Bitmap bmp_ = new Bitmap(bmp);
-        Random rand = new Random();
-        for (int i = 0; i < NP; i++)
-        {
-            int r = rand.Next(0, bmp.Height), c = rand.Next(0, bmp.Width);
-            double prob = rand.NextDouble();
-            if (prob > pa)
-            {
-                bmp_.SetPixel(c, r, Color.FromArgb(255, 255, 255));
-            }
-            else
-            {
-                bmp_.SetPixel(c, r, Color.FromArgb(0, 0, 0));
-            }
-        }
-        UpdateImg(ref bmp_);
-    }
-    ```
-
-    
-
-2. 滤波去噪
-
-    2.1 均值滤波
-
-    ```csharp
-    /// <summary>
-    /// 均值滤波
-    /// </summary>
-    private void EvenFilter()
-    {
-        Bitmap bmp_ = new Bitmap(bmp);
-        for (int i = 1; i < bmp.Width - 1; i++)
-        {
-            for (int j = 1; j < bmp.Height - 1; j++)
-            {
-                int rsum = 0, gsum = 0, bsum = 0;
-                for (int ii = -1; ii <= 1; ii++)
+                int xx = i + dir[d, 0], yy = j + dir[d, 1];
+                Color c = bmp.GetPixel(xx, yy);
+                if (c.R == 0)
                 {
-                    for(int jj = -1; jj <= 1; jj++)
-                    {
-                        int x = i + ii, y = j + jj;
-                    	Color c = bmp.GetPixel(x, y);
-                    	rsum += c.R; gsum += c.G; bsum += c.B;
-                    }
+                    flag = true;
+                    break;
                 }
-                bmp_.SetPixel(i, j, Color.FromArgb(rsum / 9, gsum / 9, bsum / 9));
             }
+            if (!flag)
+                bmp_.SetPixel(i, j, Color.White);
         }
-        UpdateImg(ref bmp_);
     }
-    ```
-
-    
-
-    2.2 中值滤波
-
-    ```csharp
-    /// <summary>
-    /// 中值滤波
-    /// </summary>
-    private void MidFilter()
-    {
-        Bitmap bmp_ = new Bitmap(bmp);
-        for (int i = 1; i < bmp.Width - 1; i++)
-        {
-            for (int j = 1; j < bmp.Height - 1; j++)
-            {
-                ArrayList rarr = new ArrayList(),
-                garr = new ArrayList(),
-                barr = new ArrayList();
-                for (int ii = -1; ii <= 1; d++)
-                {
-                    for(int jj=-1;jj<=1;jj++)
-                    {
-                        int x = i + ii, y = j + jj;
-                    	Color c = bmp.GetPixel(x, y);
-                    	rarr.Add(c.R);
-                    	garr.Add(c.G);
-                    	barr.Add(c.B);
-                    }
-                }
-                rarr.Sort();
-                garr.Sort();
-                barr.Sort();
-                bmp_.SetPixel(i, j, Color.FromArgb(Convert.ToInt32(rarr[4]),
-                                                   Convert.ToInt32(garr[4]),
-                                                   Convert.ToInt32(barr[4])));
-            }
-        }
-        UpdateImg(ref bmp_);
-    }
-    ```
-
-    
-
-3. 边界保持平滑滤波器
-
-    3.1 灰度最小方差的均值滤波器
-
-    ```csharp
-    /// <summary>
-    /// 灰度最小方差均值滤波器
-    /// </summary>
-    private void LSMF()
-    {
-        int[][,] dir = new int[9][,];
-        dir[0] = new int[,] {
-            {-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 0}, {0, 1}, {1, -1}, {1, 0}, {1, 1}
-        };
-        dir[1] = new int[,] {
-            {-1, -2}, {-1, -1}, {0, -2}, {0, -1}, {0, 0}, {1, -2}, {1, -1}
-        };
-        dir[2] = new int[,] {
-            {-2, -1}, {-2, 0}, {-2, 1}, {-1, -1}, {-1, 0}, {-1, 1}, {0, 0}
-        };
-        dir[3] = new int[,] {
-            {-1, 1}, {-1, 2}, {0, 0}, {0, 1}, {0, 2}, {1, 1}, {1, 2}
-        };
-        dir[4] = new int[,] {
-            {0, 0}, {1, -1}, {1, 0}, {1, 1}, {2, -1}, {2, 0}, {2, 1}
-        };
-        dir[5] = new int[,] {
-            {-2, -2}, {-2, -1}, {-1, -2}, {-1, -1}, {-1, 0}, {0, -1}, {0, 0}
-        };
-        dir[6] = new int[,] {
-            {-2, 1}, {-2, 2}, {-1, 0}, {-1, 1}, {-1, 2}, {0, 0}, {0, 1}
-        };
-        dir[7] = new int[,] {
-            {0, 0}, {0, 1}, {1, 0}, {1, 1}, {1, 2}, {2, 1}, {2, 2}
-        };
-        dir[8] = new int[,] {
-            {0, -1}, {0, 0}, {1, -2}, {1, -1}, {1, 0}, {2, -2}, {2, -1}
-        };
-    
-        Bitmap bmp_ = new Bitmap(bmp);
-        for (int i = 2; i < bmp.Width - 2; i++)
-        {
-            for (int j = 2; j < bmp.Height - 2; j++)
-            {
-                double minsq = 1000000000;
-                int minavg = 0;
-                for (int d = 0; d < 9; d++)
-                {
-                    double avg = 0, sq_dif = 0;
-                    List<int> arr = new List<int>();
-                    for (int dd = 0; dd < dir[d].Length; dd += 2)
-                    {
-                        Color c = bmp.GetPixel(i + dir[d][dd / 2, 0], j + dir[d][dd / 2, 1]);
-                        arr.Add(c.R);
-                    }
-                    avg = arr.Average();
-                    foreach (var r in arr)
-                    {
-                        sq_dif += (r - avg) * (r - avg);
-                    }
-                    if (sq_dif < minsq)
-                    {
-                        minsq = sq_dif;
-                        minavg = (int)avg;
-                    }
-                }
-                bmp_.SetPixel(i, j, Color.FromArgb(minavg, minavg, minavg));
-            }
-        }
-        UpdateImg(ref bmp_);
-    
-    }
-    ```
-
-    
-
-    3.2 K近邻平滑滤波器
-
-    ```csharp
-    /// <summary>
-    /// KNN中值平滑滤波
-    /// </summary>
-    /// <param name="m">模板大小（奇数)</param>
-    /// <param name="K">K</param>
-    private void KNNFilter(int m, int K)
-    {
-        if (m >= bmp.Width / 2 || K > m * m || m % 2 != 1)
-            return;
-        Bitmap bmp_ = new Bitmap(bmp);
-        int kernel = m / 2;
-        List<Tuple<int, int>> sort_list = new List<Tuple<int, int>>(m * m);
-        for (int i = kernel; i < bmp.Width - kernel; i++)
-        {
-            for (int j = kernel; j < bmp.Height - kernel; j++)
-            {
-                Color now = bmp.GetPixel(i, j);
-                sort_list.Clear();
-                for (int ii = i - kernel; ii <= i + kernel; ii++)
-                {
-                    for (int jj = j - kernel; jj <= j + kernel; jj++)
-                    {
-                        Color tmp = bmp.GetPixel(ii, jj);
-                        sort_list.Add(
-                            new Tuple<int, int>(
-                                Math.Abs(now.R - tmp.R),
-                                tmp.R
-                            )
-                        );
-                    }
-                }
-    
-                sort_list.Sort((x, y) =>
-                               {
-                                   return x.Item1 - y.Item1;
-                               });
-                int sum = 0;
-    
-                sum = sort_list[K / 2].Item2;
-                bmp_.SetPixel(i, j, Color.FromArgb(sum, sum, sum));
-            }
-        }
-        UpdateImg(ref bmp_);
-    }
-    ```
-
-    
-
-4. 二值图像去噪
-
-    4.1 黑白点噪声滤波
-
-    ```csharp
-    /// <summary>
-    /// 二值图像去噪
-    /// </summary>
-    private void BinaryFilter()
-    {
-        int[,] dir = new int[,] { { -1, -1 }, { -1, 0 }, { -1, 1 },
-                                 { 0, -1 }, { 0, 1 },
-                                 { 1, -1 },  {  1, 0 }, { 1,  1}
-                                };
-        Bitmap bmp_ = new Bitmap(bmp);
-        for (int i = 1; i < bmp.Width - 1; i++)
-        {
-            for (int j = 1; j < bmp.Height - 1; j++)
-            {
-                Color now = bmp.GetPixel(i, j);
-                double sum = 0;
-                for (int d = 0; d < 8; d++)
-                {
-                    int xx = i + dir[d, 0], yy = j + dir[d, 1];
-                    Color c = bmp.GetPixel(xx, yy);
-                    sum += c.R;
-                }
-                sum /= 8;
-                if (Math.Abs(now.R - sum) > 127.5)
-                    bmp_.SetPixel(i, j, Color.FromArgb(255 - now.R, 255 - now.R, 255 - now.R));
-            }
-        }
-        UpdateImg(ref bmp_);
-    }
-    ```
-
-    
-
-    4.2 消除孤立黑点
-
-    ```csharp
-    /// <summary>
-    /// 二值图像消除孤立点（四连通）
-    /// </summary>
-    private void BinIsoRemove()
-    {
-        int[,] dir = new int[,] { { -1, 0 }, { 0, -1 }, { 0, 1 }, { 1, 0 } };
-        Bitmap bmp_ = new Bitmap(bmp);
-        for (int i = 1; i < bmp.Width - 1; i++)
-        {
-            for (int j = 1; j < bmp.Height - 1; j++)
-            {
-                Color now = bmp.GetPixel(i, j);
-                if (now.R == 255)
-                    continue;
-                bool flag = false;
-                for (int d = 0; d < 4; d++)
-                {
-                    int xx = i + dir[d, 0], yy = j + dir[d, 1];
-                    Color c = bmp.GetPixel(xx, yy);
-                    if (c.R == 0)
-                    {
-                        flag = true;
-                        break;
-                    }
-                }
-                if (!flag)
-                    bmp_.SetPixel(i, j, Color.White);
-            }
-        }
-        UpdateImg(ref bmp_);
-    }
-    ```
-
-    
-
-    
-
-## 四. 完成体会
-
-​		噪声的抑制方法多种多样，针对不同的情况与目标有不同的应对方法。诸如本次实验所实现的均值滤波对于高斯噪声效果好，而中值滤波对于椒盐噪声效果好。然而均值滤波会使图像模糊，为此提出了保留边界特征的滤波方法。而面对简单的二值图像，又有其他较为简单的去噪方法。
+    UpdateImg(ref bmp_);
+}
+```
 
 
 
 
 
-# 实验五 图像的锐化与边缘检测
-
-
-
-## 一. 实验任务
-
-1. 双向梯度锐化
-
-2. 边缘检测
-
-    2.1 Roberts算子
-
-    2.2 Sobel算子
-
-    2.3 Laplacian算子
-
-    2.4 Wallis算子
-
-    2.5 LoG算子
-
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/20201226021521.png)
-
-
-
-## 二. 算法原理
+# 锐化与边缘检测
 
 噪声和边缘都是高频段，滤波后不清晰，因此我们需要引入<u>**锐化**</u>使图像的物体边缘变得清晰，目标区域清楚，鲜明。其作用就是**边缘部分灰度反差增强**
 
-### 1. 双向梯度锐化
+
+
+## 双向梯度锐化
 
 **梯度锐化的一般思路**：由梯度的计算可知，在图像灰度变化较大的边沿区域其梯度值大，在灰度变化平缓的区域梯度值较小，而在灰度均匀的区域其梯度值为零。所以加强梯度值大的像素灰度，或者降低梯度值小的像素灰度，以此达到**突出细节实现锐化**的效果。
 
@@ -1587,13 +1334,50 @@ $d_{y}=f(i,j)-f(i,j-1)$
 4. 将结果保存在内存缓冲区比较像素的梯度是否大于30，是则将灰度值置为255，否则置0；
 5. 将内存中的数据复制到原图像的数据区。 
 
+```csharp
+/// <summary>
+/// 双向一次微分锐化 (根据梯度二值化)
+/// </summary>
+private void BidirectionalFirstOrderDifferential()
+{
+    Bitmap bmp_ = new Bitmap(bmp);
+    int[,] gray = new int[bmp.Width, bmp.Height];
+    for (int i = 0; i < bmp.Width; i++)
+    {
+        for (int j = 0; j < bmp.Height; j++)
+        {
+            gray[i, j] = bmp.GetPixel(i, j).R;
+        }
+    }
+    for (int i = 1; i < bmp.Width; i++)
+    {
+        for (int j = 1; j < bmp.Height; j++)
+        {
+            double grad = Math.Sqrt(
+                (gray[i, j] - gray[i - 1, j]) * (gray[i, j] - gray[i - 1, j]) +
+                (gray[i, j] - gray[i, j - 1]) * (gray[i, j] - gray[i, j - 1]));
+            if (grad >= 30)
+            {
+                bmp_.SetPixel(i, j, Color.FromArgb(255, 255, 255));
+            }
+            else
+            {
+                bmp_.SetPixel(i, j, Color.FromArgb(0, 0, 0));
+            }
+        }
+    }
+
+    UpdateImg(ref bmp_);
+}
+```
+
+![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225003832320.png?x-oss-process=image/resize,p_80)
 
 
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/20201226021910.png)
 
 
 
-### 2 边缘检测
+## 边缘检测
 
 前面的锐化处理结果对于人工设计制造的具有矩形特征物体的边缘的提取很有效。但是，对于<u>不规则形状</u>的边缘提取，则存在**信息的缺损**。
 
@@ -1601,7 +1385,7 @@ $d_{y}=f(i,j)-f(i,j-1)$
 
 
 
-#### 2.1 Roberts算子
+### Roberts算子
 
 $d_{x}=f(i+1,j+1)-f(i,j)$
 
@@ -1613,13 +1397,44 @@ Roberts算子如下：
 
 ![Roberts算子](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/20201224163457.png)
 
+
+
+```csharp
+/// <summary>
+/// Roberts算子锐化
+/// </summary>
+private void Roberts()
+{
+    Bitmap bmp_ = new Bitmap(bmp.Width, bmp.Height);
+    for (int i = 0; i < bmp.Width; i++)
+    {
+        for (int j = 0; j < bmp.Height; j++)
+        {
+            if (i == bmp.Width - 1 || j == bmp.Height - 1)
+                bmp_.SetPixel(i, j, Color.FromArgb(0, 0, 0));
+            else
+            {
+                int gray1 = bmp.GetPixel(i, j).R, gray2 = bmp.GetPixel(i + 1, j).R,
+                gray3 = bmp.GetPixel(i, j + 1).R, gray4 = bmp.GetPixel(i + 1, j + 1).R;
+                int newGray = (int)Math.Sqrt((gray4 - gray1) * (gray4 - gray1) + (gray3 - gray2) * (gray3 - gray2));
+                //newGray += bmp.GetPixel(i, j).R;
+                if (newGray > 255)
+                    newGray = 255;
+                if (newGray < 0)
+                    newGray = 0;
+                bmp_.SetPixel(i, j, Color.FromArgb(newGray, newGray, newGray));
+            }
+        }
+    }
+    UpdateImg(ref bmp_);
+}
+```
+
 ![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225004044372.png?x-oss-process=image/resize,p_80)
 
 
 
-
-
-#### 2.2 Sobel算子
+### Sobel算子
 
 ![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/20201224171633.png)
 
@@ -1627,7 +1442,44 @@ Roberts算子如下：
 
 ![Sobel算子](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/20201224163848.png)
 
+```csharp
+/// <summary>
+/// Sobel算子锐化
+/// </summary>
+private void Sobel()
+{
+    Bitmap bmp_ = new Bitmap(bmp.Width, bmp.Height);
+    for (int i = 0; i < bmp.Width; i++)
+    {
+        for (int j = 0; j < bmp.Height; j++)
+        {
+            if (i == 0 || j == 0 || i == bmp.Width - 1 || j == bmp.Height - 1)
+                bmp_.SetPixel(i, j, Color.FromArgb(0, 0, 0));
+            else
+            {
+                int gray00 = bmp.GetPixel(i, j).R, gray10 = bmp.GetPixel(i + 1, j).R,
+                gray01 = bmp.GetPixel(i, j + 1).R, gray11 = bmp.GetPixel(i + 1, j + 1).R,
+                gray22 = bmp.GetPixel(i - 1, j - 1).R, gray21 = bmp.GetPixel(i - 1, j).R, gray12 = bmp.GetPixel(i, j - 1).R,
+                gray02 = bmp.GetPixel(i, j - 1).R, gray20 = bmp.GetPixel(i - 1, j).R;
+                int dx = (gray21 + 2 * gray01 + gray11) - (gray22 + 2 * gray02 + gray12);
+                int dy = (gray22 + 2 * gray20 + gray21) - (gray12 + 2 * gray10 + gray11);
+                int newGray = (int)Math.Sqrt(dx * dx + dy * dy);
+                // newGray += bmp.GetPixel(i, j).R;
+                if (newGray > 255)
+                    newGray = 255;
+                if (newGray < 0)
+                    newGray = 0;
+                bmp_.SetPixel(i, j, Color.FromArgb(newGray, newGray, newGray));
+            }
+        }
+    }
+    UpdateImg(ref bmp_);
+}
+```
+
 ![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225004241726.png?x-oss-process=image/resize,p_80)
+
+
 
 
 
@@ -1646,11 +1498,11 @@ Roberts与Sobel对比：
 
 ![渐变的细节](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/20201224174206.png?x-oss-process=image/resize,p_30)
 
-但采用**二阶微分**能够更加获得更丰富的景物细节。
+但采用二阶微分能够更加获得更丰富的景物细节。
 
 
 
-#### 2.3 Laplacian算子
+### Laplacian算子
 
 二阶微分算子的**原理**如下：
 
@@ -1666,11 +1518,64 @@ Roberts与Sobel对比：
 
 拉普拉斯**对噪声敏感**，会产生<u>双边效果</u>。不能检测出边的方向。故通常不直接用于边的检测，只起辅助的角色，检测一个像素是在边的亮的一边还是暗的一边利用零跨越，确定边的位置。
 
+
+
+```csharp
+/// <summary>
+/// Laplacian算子锐化
+/// </summary>
+private void Laplacian()
+{
+    int[,] tmp = new int[bmp.Width, bmp.Height];
+    Bitmap bmp_ = new Bitmap(bmp.Width, bmp.Height);
+    for (int i = 0; i < bmp.Width; i++)
+    {
+        for (int j = 0; j < bmp.Height; j++)
+        {
+            if (i == 0 || j == 0 || i == bmp.Width - 1 || j == bmp.Height - 1)
+                tmp[i, j] = 0;
+            else
+            {
+                int newGray = 8 * bmp.GetPixel(i, j).R - bmp.GetPixel(i - 1, j).R
+                    - bmp.GetPixel(i, j - 1).R - bmp.GetPixel(i, j + 1).R
+                    - bmp.GetPixel(i + 1, j).R - bmp.GetPixel(i - 1, j - 1).R
+                    - bmp.GetPixel(i - 1, j + 1).R - bmp.GetPixel(i + 1, j + 1).R
+                    - bmp.GetPixel(i + 1, j - 1).R;
+                tmp[i, j] = newGray;
+            }
+        }
+    }
+    for (int i = 0; i < bmp.Width; i++)
+    {
+        for (int j = 0; j < bmp.Height; j++)
+        {
+            int gg = tmp[i, j];
+            // 实现锐化效果则需要原图加上该点
+            // gg += bmp.GetPixel(i, j).R;
+            gg = Math.Min(gg, 255);
+            gg = Math.Max(gg, 0);
+            bmp_.SetPixel(i, j, Color.FromArgb(gg, gg, gg));
+        }
+    }
+
+    UpdateImg(ref bmp_);
+}
+```
+
 ![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225004652028.png?x-oss-process=image/resize,p_80)
 
 
 
-#### 2.4 Wallis算子
+以Sobel与Laplacian为例,对比**一阶微分算子**与**二阶微分算子**：
+
+| 算子      | 特点                                                         |
+| --------- | ------------------------------------------------------------ |
+| Sobel     | 获得的边界是比较粗略的边界，反映的边界信息较少，但是所反映的边界比较清晰 |
+| Laplacian | 获得的边界是比较细致的边界。反映的边界信息包括了许多的细节信息，但是所反映的边界不是太清晰 |
+
+
+
+### Wallis算子
 
 考虑到人的视觉特性中包含一个对数环节，因此在锐化时，加入**对数处理**的方法来改进。
 
@@ -1688,11 +1593,61 @@ Roberts与Sobel对比：
 
 
 
+```csharp
+/// <summary>
+/// Wallis算子锐化
+/// </summary>
+private void Wallis()
+{
+    double[,] tmp = new double[bmp.Width, bmp.Height];
+    Bitmap bmp_ = new Bitmap(bmp.Width, bmp.Height);
+    double minn = 1000;
+    for (int i = 0; i < bmp.Width; i++)
+    {
+        for (int j = 0; j < bmp.Height; j++)
+        {
+            if (i == 0 || j == 0 || i == bmp.Width - 1 || j == bmp.Height - 1)
+                tmp[i, j] = 0;
+            else
+            {
+                double x0 = 46 * Math.Log(bmp.GetPixel(i, j).R + 1),
+                x1 = 46 * Math.Log(bmp.GetPixel(i - 1, j).R + 1),
+                x2 = 46 * Math.Log(bmp.GetPixel(i + 1, j).R + 1),
+                x3 = 46 * Math.Log(bmp.GetPixel(i, j - 1).R + 1),
+                x4 = 46 * Math.Log(bmp.GetPixel(i, j + 1).R + 1);
+
+                double newGray = 4 * x0 - (x1 + x2 + x3 + x4);
+                minn = Math.Min(newGray, minn);
+
+                tmp[i, j] = newGray;
+            }
+        }
+    }
+    for (int i = 0; i < bmp.Width; i++)
+    {
+        for (int j = 0; j < bmp.Height; j++)
+        {
+            double g = tmp[i, j];
+            //g = 46 * (g - minn);
+            int gg = (int)g;
+            if (g > 8)
+                gg = 255;
+            else gg = 0;
+
+            gg = Math.Min(gg, 255);
+            gg = Math.Max(gg, 0);
+            bmp_.SetPixel(i, j, Color.FromArgb(gg, gg, gg));
+        }
+    }
+    UpdateImg(ref bmp_);
+}
+```
+
 ![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225004756771.png?x-oss-process=image/resize,p_80)
 
 
 
-#### 2.5 LoG算子
+### LoG算子
 
 **问题：**
 
@@ -1700,326 +1655,83 @@ Roberts与Sobel对比：
 
 因此 **LoG算子**（Laplacian of Gauss）先对图像进行高斯平滑滤波以抑制噪声，然后再使用**Laplacian算子**进行求微分。
 
-
-
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225004902692.png?x-oss-process=image/resize,p_80)
-
-
-
-## 三. 实验代码
-
-1. 双向梯度锐化
-
-    ```csharp
-    /// <summary>
-    /// 双向一次微分锐化 (根据梯度二值化)
-    /// </summary>
-    private void BidirectionalFirstOrderDifferential()
+```csharp
+/// <summary>
+/// 高斯拉普拉斯算子锐化
+/// </summary>
+private void LoG()
+{
+    // 高斯模糊
+    int[,] tmp = new int[bmp.Width, bmp.Height];
+    int[] dir = { 1, 2, 1, 2, 4, 2, 1, 2, 1 };
+    for (int i = 0; i < bmp.Width; i++)
     {
-        Bitmap bmp_ = new Bitmap(bmp);
-        int[,] gray = new int[bmp.Width, bmp.Height];
-        for (int i = 0; i < bmp.Width; i++)
+        for (int j = 0; j < bmp.Height; j++)
         {
-            for (int j = 0; j < bmp.Height; j++)
-            {
-                gray[i, j] = bmp.GetPixel(i, j).R;
-            }
+            tmp[i, j] = 0;
         }
-        for (int i = 1; i < bmp.Width; i++)
-        {
-            for (int j = 1; j < bmp.Height; j++)
-            {
-                double grad = Math.Sqrt(
-                    (gray[i, j] - gray[i - 1, j]) * (gray[i, j] - gray[i - 1, j]) +
-                    (gray[i, j] - gray[i, j - 1]) * (gray[i, j] - gray[i, j - 1]));
-                if (grad >= 30)
-                {
-                    bmp_.SetPixel(i, j, Color.FromArgb(255, 255, 255));
-                }
-                else
-                {
-                    bmp_.SetPixel(i, j, Color.FromArgb(0, 0, 0));
-                }
-            }
-        }
-    
-        UpdateImg(ref bmp_);
     }
-    ```
 
-2. 边缘检测
-
-    2.1 Roberts算子
-
-    ```csharp
-    /// <summary>
-    /// Roberts算子锐化
-    /// </summary>
-    private void Roberts()
+    for (int i = 1; i < bmp.Width - 1; i++)
     {
-        Bitmap bmp_ = new Bitmap(bmp.Width, bmp.Height);
-        for (int i = 0; i < bmp.Width; i++)
+        for (int j = 1; j < bmp.Height - 1; j++)
         {
-            for (int j = 0; j < bmp.Height; j++)
+            int rsum = 0;
+            for (int k = 0; k < 9; k++)
             {
-                if (i == bmp.Width - 1 || j == bmp.Height - 1)
-                    bmp_.SetPixel(i, j, Color.FromArgb(0, 0, 0));
-                else
-                {
-                    int gray1 = bmp.GetPixel(i, j).R, gray2 = bmp.GetPixel(i + 1, j).R,
-                    gray3 = bmp.GetPixel(i, j + 1).R, gray4 = bmp.GetPixel(i + 1, j + 1).R;
-                    int newGray = (int)Math.Sqrt((gray4 - gray1) * (gray4 - gray1) + (gray3 - gray2) * (gray3 - gray2));
-                    //newGray += bmp.GetPixel(i, j).R;
-                    if (newGray > 255)
-                        newGray = 255;
-                    if (newGray < 0)
-                        newGray = 0;
-                    bmp_.SetPixel(i, j, Color.FromArgb(newGray, newGray, newGray));
-                }
+                int jj = k / 3, ii = k % 3;
+                Color c = bmp.GetPixel(i - 1 + ii, j - 1 + jj);
+                rsum += c.R * dir[k];
             }
+            tmp[i, j] = rsum / 16;
         }
-        UpdateImg(ref bmp_);
     }
-    ```
-
-    
-
-    2.2 Sobel算子
-
-    ```csharp
-    /// <summary>
-    /// Sobel算子锐化
-    /// </summary>
-    private void Sobel()
+    // 拉普拉斯算子
+    Bitmap bmp_ = new Bitmap(bmp.Width, bmp.Height);
+    int[,] tmp2 = new int[bmp.Width, bmp.Height];
+    int[] dir2 = { -1, -1, -1, -1, 8, -1, -1, -1, -1 };
+    for (int i = 1; i < bmp.Width - 1; i++)
     {
-        Bitmap bmp_ = new Bitmap(bmp.Width, bmp.Height);
-        for (int i = 0; i < bmp.Width; i++)
+        for (int j = 1; j < bmp.Height - 1; j++)
         {
-            for (int j = 0; j < bmp.Height; j++)
+            int sum = 0;
+            for (int k = 0; k < 9; k++)
             {
-                if (i == 0 || j == 0 || i == bmp.Width - 1 || j == bmp.Height - 1)
-                    bmp_.SetPixel(i, j, Color.FromArgb(0, 0, 0));
-                else
-                {
-                    int gray00 = bmp.GetPixel(i, j).R, gray10 = bmp.GetPixel(i + 1, j).R,
-                    gray01 = bmp.GetPixel(i, j + 1).R, gray11 = bmp.GetPixel(i + 1, j + 1).R,
-                    gray22 = bmp.GetPixel(i - 1, j - 1).R, gray21 = bmp.GetPixel(i - 1, j).R, gray12 = bmp.GetPixel(i, j - 1).R,
-                    gray02 = bmp.GetPixel(i, j - 1).R, gray20 = bmp.GetPixel(i - 1, j).R;
-                    int dx = (gray21 + 2 * gray01 + gray11) - (gray22 + 2 * gray02 + gray12);
-                    int dy = (gray22 + 2 * gray20 + gray21) - (gray12 + 2 * gray10 + gray11);
-                    int newGray = (int)Math.Sqrt(dx * dx + dy * dy);
-                    // newGray += bmp.GetPixel(i, j).R;
-                    if (newGray > 255)
-                        newGray = 255;
-                    if (newGray < 0)
-                        newGray = 0;
-                    bmp_.SetPixel(i, j, Color.FromArgb(newGray, newGray, newGray));
-                }
+                int jj = k / 3, ii = k % 3;
+                sum += dir2[k] * tmp[i - 1 + ii, j - 1 + jj];
             }
+            tmp2[i, j] = sum;
         }
-        UpdateImg(ref bmp_);
     }
-    ```
-
-    
-
-    2.3 Laplacian算子
-
-    ```csharp
-    /// <summary>
-    /// Laplacian算子锐化
-    /// </summary>
-    private void Laplacian()
+    for (int i = 0; i < bmp.Width; i++)
     {
-        int[,] tmp = new int[bmp.Width, bmp.Height];
-        Bitmap bmp_ = new Bitmap(bmp.Width, bmp.Height);
-        for (int i = 0; i < bmp.Width; i++)
+        for (int j = 0; j < bmp.Height; j++)
         {
-            for (int j = 0; j < bmp.Height; j++)
-            {
-                if (i == 0 || j == 0 || i == bmp.Width - 1 || j == bmp.Height - 1)
-                    tmp[i, j] = 0;
-                else
-                {
-                    int newGray = 8 * bmp.GetPixel(i, j).R - bmp.GetPixel(i - 1, j).R
-                        - bmp.GetPixel(i, j - 1).R - bmp.GetPixel(i, j + 1).R
-                        - bmp.GetPixel(i + 1, j).R - bmp.GetPixel(i - 1, j - 1).R
-                        - bmp.GetPixel(i - 1, j + 1).R - bmp.GetPixel(i + 1, j + 1).R
-                        - bmp.GetPixel(i + 1, j - 1).R;
-                    tmp[i, j] = newGray;
-                }
-            }
+            int newGray = tmp2[i, j];
+            newGray = Math.Max(0, newGray);
+            newGray = Math.Min(255, newGray);
+            bmp_.SetPixel(i, j, Color.FromArgb(newGray, newGray, newGray));
         }
-        for (int i = 0; i < bmp.Width; i++)
-        {
-            for (int j = 0; j < bmp.Height; j++)
-            {
-                int gg = tmp[i, j];
-                // 实现锐化效果则需要原图加上该点
-                // gg += bmp.GetPixel(i, j).R;
-                gg = Math.Min(gg, 255);
-                gg = Math.Max(gg, 0);
-                bmp_.SetPixel(i, j, Color.FromArgb(gg, gg, gg));
-            }
-        }
-    
-        UpdateImg(ref bmp_);
     }
-    ```
+    UpdateImg(ref bmp_);
+}
+```
 
-    2.4 Wallis算子
-
-    ```csharp
-    /// <summary>
-    /// Wallis算子锐化
-    /// </summary>
-    private void Wallis()
-    {
-        double[,] tmp = new double[bmp.Width, bmp.Height];
-        Bitmap bmp_ = new Bitmap(bmp.Width, bmp.Height);
-        double minn = 1000;
-        for (int i = 0; i < bmp.Width; i++)
-        {
-            for (int j = 0; j < bmp.Height; j++)
-            {
-                if (i == 0 || j == 0 || i == bmp.Width - 1 || j == bmp.Height - 1)
-                    tmp[i, j] = 0;
-                else
-                {
-                    double x0 = 46 * Math.Log(bmp.GetPixel(i, j).R + 1),
-                    x1 = 46 * Math.Log(bmp.GetPixel(i - 1, j).R + 1),
-                    x2 = 46 * Math.Log(bmp.GetPixel(i + 1, j).R + 1),
-                    x3 = 46 * Math.Log(bmp.GetPixel(i, j - 1).R + 1),
-                    x4 = 46 * Math.Log(bmp.GetPixel(i, j + 1).R + 1);
-    
-                    double newGray = 4 * x0 - (x1 + x2 + x3 + x4);
-                    minn = Math.Min(newGray, minn);
-    
-                    tmp[i, j] = newGray;
-                }
-            }
-        }
-        for (int i = 0; i < bmp.Width; i++)
-        {
-            for (int j = 0; j < bmp.Height; j++)
-            {
-                double g = tmp[i, j];
-                //g = 46 * (g - minn);
-                int gg = (int)g;
-                if (g > 8)
-                    gg = 255;
-                else gg = 0;
-    
-                gg = Math.Min(gg, 255);
-                gg = Math.Max(gg, 0);
-                bmp_.SetPixel(i, j, Color.FromArgb(gg, gg, gg));
-            }
-        }
-        UpdateImg(ref bmp_);
-    }
-    ```
-
-    
-
-    2.5 LoG算子
-
-    ```csharp
-    /// <summary>
-    /// 高斯拉普拉斯算子锐化
-    /// </summary>
-    private void LoG()
-    {
-        // 高斯模糊
-        int[,] tmp = new int[bmp.Width, bmp.Height];
-        int[] dir = { 1, 2, 1, 2, 4, 2, 1, 2, 1 };
-        for (int i = 0; i < bmp.Width; i++)
-        {
-            for (int j = 0; j < bmp.Height; j++)
-            {
-                tmp[i, j] = 0;
-            }
-        }
-    
-        for (int i = 1; i < bmp.Width - 1; i++)
-        {
-            for (int j = 1; j < bmp.Height - 1; j++)
-            {
-                int rsum = 0;
-                for (int k = 0; k < 9; k++)
-                {
-                    int jj = k / 3, ii = k % 3;
-                    Color c = bmp.GetPixel(i - 1 + ii, j - 1 + jj);
-                    rsum += c.R * dir[k];
-                }
-                tmp[i, j] = rsum / 16;
-            }
-        }
-        // 拉普拉斯算子
-        Bitmap bmp_ = new Bitmap(bmp.Width, bmp.Height);
-        int[,] tmp2 = new int[bmp.Width, bmp.Height];
-        int[] dir2 = { -1, -1, -1, -1, 8, -1, -1, -1, -1 };
-        for (int i = 1; i < bmp.Width - 1; i++)
-        {
-            for (int j = 1; j < bmp.Height - 1; j++)
-            {
-                int sum = 0;
-                for (int k = 0; k < 9; k++)
-                {
-                    int jj = k / 3, ii = k % 3;
-                    sum += dir2[k] * tmp[i - 1 + ii, j - 1 + jj];
-                }
-                tmp2[i, j] = sum;
-            }
-        }
-        for (int i = 0; i < bmp.Width; i++)
-        {
-            for (int j = 0; j < bmp.Height; j++)
-            {
-                int newGray = tmp2[i, j];
-                newGray = Math.Max(0, newGray);
-                newGray = Math.Min(255, newGray);
-                bmp_.SetPixel(i, j, Color.FromArgb(newGray, newGray, newGray));
-            }
-        }
-        UpdateImg(ref bmp_);
-    }
-    ```
-
-    
-
-## 四. 完成体会
-
-边缘检测是图像处理和计算机视觉中的基本问题，对于图像识别有着很大的帮助。本次实验加深了我对边缘检测的理解。
+![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225004902692.png)
 
 
 
-# 实验六 图像的分割和测量
-
-## 一. 实验任务
-
-1. 图像分割方法
-
-    1.1 迭代阈值图像分割
-
-    1.2 灰度-局部灰度均值散布图法
-
-    1.3 轮廓提取法
-
-2. 二值图像的测量
 
 
-
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/20201226025648.png)
-
-
-
-## 二. 算法原理
-
-### 1. 图像分割方法
+# 图像分割和二值图像测量
 
 图像分割将图像分为一些有意义的子区域，通过某种方法，使得画面场景被分为“目标物”及“非目标物”两类，即将图像的像素变换为黑、白两种。然后可以对这些区域进行描述，相当于提取出某些目标区域图像的特征。
 
-#### 1.1 迭代阈值图像分割
+
+
+## 图像分割方法
+
+### 基于图像灰度分布的阈值方法——迭代阈值图像分割
 
 一种简单的图像分割原理：选定一个阈值$T$，灰度大于或等于 $T$ 的像素点置为白，否则置为黑。
 
@@ -2031,14 +1743,98 @@ Roberts与Sobel对比：
 
 1.  设定阈值$T$，初始为127；
 
-2.  通过初始阈值$T$，把图像的平均灰度值分成两组 $R1$ 和 $R2$；
-3.  计算着两组平均灰度值$μ1$和$μ2$；
-4.  重新选择阈值$T$，新的T定义为：$T=(μ1+μ2)/2$;
-5.  循环做第二步到第四步，一直到 $T$ 的值不再发生改变，那么我们就获得了所需要的阈值。 
+2. 通过初始阈值$T$，把图像的平均灰度值分成两组 $R1$ 和 $R2$；
+3. 计算着两组平均灰度值$μ1$和$μ2$；
+4. 重新选择阈值$T$，新的T定义为：$T=(μ1+μ2)/2$;
+5. 循环做第二步到第四步，一直到 $T$ 的值不再发生改变，那么我们就获得了所需要的阈值。 
 
-![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/20201226030104.png)
 
-#### 1.2 灰度-局部灰度均值散布图法
+
+```csharp
+/// <summary>
+/// 迭代阈值分割所用求阈值子函数
+/// </summary>
+/// <param name="grayCount">灰度统计</param>
+/// <returns>求得的阈值</returns>
+private int ITS_th(ref int[] grayCount)
+{
+    int th;
+    int l = 0, r = 255, prel = 0, prer = 255;
+    while (true)
+    {
+        prel = l;
+        prer = r;
+        th = (l + r) / 2;
+        int Asum = 0, Acnt = 0, Bsum = 0, Bcnt = 0;
+        for (int i = 0; i < 256; i++)
+        {
+            if (i >= th)
+            {
+                Bsum += i * grayCount[i];
+                Bcnt += grayCount[i];
+            }
+            else
+            {
+                Asum += i * grayCount[i];
+                Acnt += grayCount[i];
+            }
+        }
+        l = Asum / Acnt;
+        r = Bsum / Bcnt;
+        if (l == prel && r == prer)
+            break;
+    }
+    th = (l + r) / 2;
+    return th;
+}
+
+/// <summary>
+/// 迭代阈值分割
+/// </summary>
+private void IterativeThresholdSegmentation()
+{
+    // 统计灰度
+    int[] grayCount = new int[256];
+    for (int i = 0; i < 256; i++)
+        grayCount[i] = 0;
+    for (int i = 0; i < bmp.Width; i++)
+    {
+        for (int j = 0; j < bmp.Height; j++)
+        {
+            int x = bmp.GetPixel(i, j).R;
+            grayCount[x] += 1;
+        }
+    }
+
+    int th = ITS_th(ref grayCount);
+    
+	// 根据阈值分割图像
+    Bitmap bmp_ = new Bitmap(bmp.Width, bmp.Height);
+
+    for (int i = 0; i < bmp.Width; i++)
+    {
+        for (int j = 0; j < bmp.Height; j++)
+        {
+            int x = bmp.GetPixel(i, j).R;
+            if (x >= th)
+            {
+                bmp_.SetPixel(i, j, Color.White);
+            }
+            else
+            {
+                bmp_.SetPixel(i, j, Color.Black);
+            }
+        }
+    }
+    UpdateImg(ref bmp_);
+}
+```
+
+![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225011148693.png?x-oss-process=image/resize,p_70)
+
+
+
+### 基于图像灰度空间分布的阈值方法——灰度-局部灰度均值散布图法
 
 前面所讲的阈值方法是单一阈值。即对整幅图像采用一个被确定的阈值进行分割处理。
 
@@ -2067,13 +1863,72 @@ Roberts与Sobel对比：
 
 
 
+```csharp
+/// <summary>
+/// 灰度-局部灰度均值散布图法（使用迭代阈值分割法找阈值）
+/// </summary>
+private void LocalGrayAverage()
+{
+    int[] grayCount = new int[256];
+    int[] aveGrayCount = new int[256];
+    for (int i = 0; i < 256; i++)
+        grayCount[i] = 0;
+
+    for (int i = 0; i < bmp.Width; i++)
+    {
+        for (int j = 0; j < bmp.Height; j++)
+        {
+            int x = bmp.GetPixel(i, j).R;
+            grayCount[x] += 1;
+            if (i > 0 && j > 0 && i < bmp.Width - 1 && j < bmp.Height - 1)
+            {
+                int sum =
+                    bmp.GetPixel(i - 1, j - 1).R + bmp.GetPixel(i - 1, j).R + bmp.GetPixel(i - 1, j + 1).R
+                    + bmp.GetPixel(i, j - 1).R + bmp.GetPixel(i, j).R + bmp.GetPixel(i, j + 1).R
+                    + bmp.GetPixel(i + 1, j - 1).R + bmp.GetPixel(i + 1, j).R + bmp.GetPixel(i + 1, j + 1).R;
+                sum /= 9;
+                if (x == sum)
+                {
+                    aveGrayCount[sum]++;
+                }
+            }
+            else aveGrayCount[x]++;
+        }
+    }
+    int th = ITS_th(ref aveGrayCount);
+
+    Bitmap bmp_ = new Bitmap(bmp.Width, bmp.Height);
+
+    for (int i = 0; i < bmp.Width; i++)
+    {
+        for (int j = 0; j < bmp.Height; j++)
+        {
+            int x = bmp.GetPixel(i, j).R;
+            if (x >= th)
+            {
+                bmp_.SetPixel(i, j, Color.White);
+            }
+            else
+            {
+                bmp_.SetPixel(i, j, Color.Black);
+            }
+        }
+    }
+    UpdateImg(ref bmp_);
+}
+```
+
 ![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225011318157.png?x-oss-process=image/resize,p_70)
+
+
 
 ![车牌号识别](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225014134806.png?x-oss-process=image/resize,p_60)
 
 
 
-#### 1.3 轮廓提取法
+
+
+### 边缘检测法——轮廓提取法
 
 图像边缘是图像局部特性不连续性的反映，它标志着一个区域的终结和另一个区域的开始。
 
@@ -2095,11 +1950,66 @@ Roberts与Sobel对比：
 
 
 
+```csharp
+/// <summary>
+/// 轮廓提取法
+/// </summary>
+private void EdgeExtraction()
+{
+    Bitmap bmp_ = new Bitmap(bmp);
+    int[,] tmp = new int[bmp.Width, bmp.Height];
+    for (int i = 0; i < bmp.Width; i++)
+    {
+        for (int j = 0; j < bmp.Height; j++)
+        {
+            tmp[i, j] = bmp.GetPixel(i, j).R;
+            if (tmp[i, j] > 128)
+                tmp[i, j] = 255;
+            else tmp[i, j] = 0;
+        }
+    }
+
+    for (int i = 1; i < bmp.Width - 1; i++)
+    {
+        for (int j = 1; j < bmp.Height - 1; j++)
+        {
+            if (tmp[i, j] == 255)
+                continue;
+            bool flag = false;
+            for (int ii = -1; !flag && ii <= 1; ii++)
+            {
+                for (int jj = -1; jj <= 1; jj++)
+                {
+                    if (tmp[i + ii, j + jj] == 255)
+                    {
+                        flag = true;
+                        break;
+                    }
+                }
+            }
+            if (!flag)
+            {
+                bmp_.SetPixel(i, j, Color.White);
+            }
+            else
+            {
+                bmp_.SetPixel(i, j, Color.Black);
+            }
+
+        }
+    }
+
+    UpdateImg(ref bmp_);
+}
+```
+
 ![](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225011459394.png?x-oss-process=image/resize,p_70)
 
 
 
-### 2. 二值图像的测量
+
+
+## 二值图像的测量
 
 对于二值图像中的一个黑色连通块
 
@@ -2113,9 +2023,9 @@ Roberts与Sobel对比：
 
 1. 求面积使用**洪泛法**（深度优先搜索）
 
-    **步骤：**
+   **步骤：**
 
-    遍历图像中的像素点，遇到一个**未打上标记的**黑色像素点便开始以下算法：
+   遍历图像中的像素点，遇到一个**未打上标记的**黑色像素点便开始以下算法：
 
 - 将该像素点打上标记，统计量加1
 - 对该像素点的**未被打上标记**的邻近像素点继续执行此操作，直到无法继续
@@ -2129,442 +2039,225 @@ Roberts与Sobel对比：
 
 
 
-![测量结果](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225012746438.png)
+```csharp
+//连通块类
+public class Block
+{
+    public int perimeter, size;
+    public int up, bottom, left, right;
 
-
-
-## 三. 实验代码
-
-1. 图像分割方法
-
-    1.1 迭代阈值图像分割
-
-    ```csharp
-    /// <summary>
-    /// 迭代阈值分割所用求阈值子函数
-    /// </summary>
-    /// <param name="grayCount">灰度统计</param>
-    /// <returns>求得的阈值</returns>
-    private int ITS_th(ref int[] grayCount)
+    public Block(int p, int s, int u, int b, int l, int r)
     {
-        int th;
-        int l = 0, r = 255, prel = 0, prer = 255;
-        while (true)
-        {
-            prel = l;
-            prer = r;
-            th = (l + r) / 2;
-            int Asum = 0, Acnt = 0, Bsum = 0, Bcnt = 0;
-            for (int i = 0; i < 256; i++)
-            {
-                if (i >= th)
-                {
-                    Bsum += i * grayCount[i];
-                    Bcnt += grayCount[i];
-                }
-                else
-                {
-                    Asum += i * grayCount[i];
-                    Acnt += grayCount[i];
-                }
-            }
-            l = Asum / Acnt;
-            r = Bsum / Bcnt;
-            if (l == prel && r == prer)
-                break;
-        }
-        th = (l + r) / 2;
-        return th;
+        perimeter = p;
+        size = s;
+        up = u;
+        bottom = b;
+        left = l;
+        right = r;
     }
-    
-    /// <summary>
-    /// 迭代阈值分割
-    /// </summary>
-    private void IterativeThresholdSegmentation()
+}
+
+// 测量二值图类
+class BinaryMeasurer
+{
+    public List<Block> arr;
+    int[,] flag, gray;
+    int mk = 1, width, height;
+    // 顺时针的八个方向的坐标变化
+    int[,] dirs = { {-1, 0}, {-1, 1}, {0, 1}, { 1, 1 }, { 1, 0 }, { 1, -1 }
+                   , { 0, -1 }, {-1, -1 } };
+    public BinaryMeasurer(ref Bitmap bmp)
     {
-        // 统计灰度
-        int[] grayCount = new int[256];
-        for (int i = 0; i < 256; i++)
-            grayCount[i] = 0;
+        width = bmp.Width;
+        height = bmp.Height;
+        flag = new int[bmp.Width, bmp.Height];
+        gray = new int[bmp.Width, bmp.Height];
+        arr = new List<Block>();
         for (int i = 0; i < bmp.Width; i++)
         {
             for (int j = 0; j < bmp.Height; j++)
             {
-                int x = bmp.GetPixel(i, j).R;
-                grayCount[x] += 1;
+                flag[i, j] = 0;
+                gray[i, j] = bmp.GetPixel(i, j).R;
             }
         }
-    
-        int th = ITS_th(ref grayCount);
-        
-    	// 根据阈值分割图像
-        Bitmap bmp_ = new Bitmap(bmp.Width, bmp.Height);
-    
-        for (int i = 0; i < bmp.Width; i++)
-        {
-            for (int j = 0; j < bmp.Height; j++)
-            {
-                int x = bmp.GetPixel(i, j).R;
-                if (x >= th)
-                {
-                    bmp_.SetPixel(i, j, Color.White);
-                }
-                else
-                {
-                    bmp_.SetPixel(i, j, Color.Black);
-                }
-            }
-        }
-        UpdateImg(ref bmp_);
     }
-    ```
 
-    
-
-    1.2 灰度-局部灰度均值散布图法
-
-    ```csharp
-    /// <summary>
-    /// 灰度-局部灰度均值散布图法（使用迭代阈值分割法找阈值）
-    /// </summary>
-    private void LocalGrayAverage()
+    //洪泛法求面积
+    public void CalSize()
     {
-        int[] grayCount = new int[256];
-        int[] aveGrayCount = new int[256];
-        for (int i = 0; i < 256; i++)
-            grayCount[i] = 0;
-    
-        for (int i = 0; i < bmp.Width; i++)
+        for(int i=0;i<width;i++)
         {
-            for (int j = 0; j < bmp.Height; j++)
+            for(int j=0;j<height;j++)
             {
-                int x = bmp.GetPixel(i, j).R;
-                grayCount[x] += 1;
-                if (i > 0 && j > 0 && i < bmp.Width - 1 && j < bmp.Height - 1)
+                if(flag[i, j]==0 && gray[i,j]==0)
                 {
-                    int sum =
-                        bmp.GetPixel(i - 1, j - 1).R + bmp.GetPixel(i - 1, j).R + bmp.GetPixel(i - 1, j + 1).R
-                        + bmp.GetPixel(i, j - 1).R + bmp.GetPixel(i, j).R + bmp.GetPixel(i, j + 1).R
-                        + bmp.GetPixel(i + 1, j - 1).R + bmp.GetPixel(i + 1, j).R + bmp.GetPixel(i + 1, j + 1).R;
-                    sum /= 9;
-                    if (x == sum)
+                    Block block = new Block(0, 0, 0, height, width, 0);
+                    arr.Add(block);
+                    FloodFill(i, j, mk++);
+                }
+            }
+        }
+    }
+
+    //洪泛函数,用栈模拟递归防止栈溢出
+    void FloodFill(int xi, int yi, int mkk)
+    {
+        int m = mkk - 1;
+        Stack<int> stack = new Stack<int>();
+        stack.Push(xi * width + yi);
+        while(stack.Count()!=0)
+        {
+            int x = stack.Peek() / width, y = stack.Peek() % width;
+            stack.Pop();
+            flag[x, y] = mkk;
+            arr[m].size += 1;
+            arr[m].up = Math.Max(arr[m].up, y);
+            arr[m].bottom = Math.Min(arr[m].bottom, y);
+            arr[m].left = Math.Min(arr[m].left, x);
+            arr[m].right = Math.Max(arr[m].right, x);
+            int xx = x - 1, yy = y;
+            if (xx >= 0 && xx < width && yy >= 0 && yy < height)
+            {
+                if (flag[xx, yy] == 0 && gray[xx, yy] == 0)
+                {
+                    stack.Push(xx * width + yy);
+                }
+            }
+            xx = x + 1; yy = y;
+            if (xx >= 0 && xx < width && yy >= 0 && yy < height)
+            {
+                if (flag[xx, yy] == 0 && gray[xx, yy] == 0)
+                {
+                    stack.Push(xx * width + yy);
+                }
+            }
+            xx = x; yy = y - 1;
+            if (xx >= 0 && xx < width && yy >= 0 && yy < height)
+            {
+                if (flag[xx, yy] == 0 && gray[xx, yy] == 0)
+                {
+                    stack.Push(xx * width + yy);
+                }
+            }
+            xx = x; yy = y + 1;
+            if (xx >= 0 && xx < width && yy >= 0 && yy < height)
+            {
+                if (flag[xx, yy] == 0 && gray[xx, yy] == 0)
+                {
+                    stack.Push(xx * width + yy);
+                }
+            }
+        }
+    }
+
+    //沿边缘计算周长
+    public void CalPerimeter()
+    {
+        for(int k=1;k<mk;k++)
+        {
+            bool f = false;
+            for(int i=arr[k-1].left; !f && i<=arr[k-1].right;i++)
+            {
+                for(int j=arr[k-1].bottom;j<=arr[k-1].up;j++)
+                {
+                    if(flag[i, j] == k)
                     {
-                        aveGrayCount[sum]++;
-                    }
-                }
-                else aveGrayCount[x]++;
-            }
-        }
-        int th = ITS_th(ref aveGrayCount);
-    
-        Bitmap bmp_ = new Bitmap(bmp.Width, bmp.Height);
-    
-        for (int i = 0; i < bmp.Width; i++)
-        {
-            for (int j = 0; j < bmp.Height; j++)
-            {
-                int x = bmp.GetPixel(i, j).R;
-                if (x >= th)
-                {
-                    bmp_.SetPixel(i, j, Color.White);
-                }
-                else
-                {
-                    bmp_.SetPixel(i, j, Color.Black);
-                }
-            }
-        }
-        UpdateImg(ref bmp_);
-    }
-    ```
-
-    
-
-    1.3 轮廓提取法
-
-    ```csharp
-    /// <summary>
-    /// 轮廓提取法
-    /// </summary>
-    private void EdgeExtraction()
-    {
-        Bitmap bmp_ = new Bitmap(bmp);
-        int[,] tmp = new int[bmp.Width, bmp.Height];
-        for (int i = 0; i < bmp.Width; i++)
-        {
-            for (int j = 0; j < bmp.Height; j++)
-            {
-                tmp[i, j] = bmp.GetPixel(i, j).R;
-                if (tmp[i, j] > 128)
-                    tmp[i, j] = 255;
-                else tmp[i, j] = 0;
-            }
-        }
-    
-        for (int i = 1; i < bmp.Width - 1; i++)
-        {
-            for (int j = 1; j < bmp.Height - 1; j++)
-            {
-                if (tmp[i, j] == 255)
-                    continue;
-                bool flag = false;
-                for (int ii = -1; !flag && ii <= 1; ii++)
-                {
-                    for (int jj = -1; jj <= 1; jj++)
-                    {
-                        if (tmp[i + ii, j + jj] == 255)
+                        arr[k - 1].perimeter = 1;
+                        int kk = 1;
+                        for(;;kk=(kk+1)%8)
                         {
-                            flag = true;
-                            break;
-                        }
-                    }
-                }
-                if (!flag)
-                {
-                    bmp_.SetPixel(i, j, Color.White);
-                }
-                else
-                {
-                    bmp_.SetPixel(i, j, Color.Black);
-                }
-    
-            }
-        }
-    
-        UpdateImg(ref bmp_);
-    }
-    ```
-
-    
-
-2. 二值图像的测量
-
-    ```csharp
-    //连通块类
-    public class Block
-    {
-        public int perimeter, size;
-        public int up, bottom, left, right;
-    
-        public Block(int p, int s, int u, int b, int l, int r)
-        {
-            perimeter = p;
-            size = s;
-            up = u;
-            bottom = b;
-            left = l;
-            right = r;
-        }
-    }
-    
-    // 测量二值图类
-    class BinaryMeasurer
-    {
-        public List<Block> arr;
-        int[,] flag, gray;
-        int mk = 1, width, height;
-        // 顺时针的八个方向的坐标变化
-        int[,] dirs = { {-1, 0}, {-1, 1}, {0, 1}, { 1, 1 }, { 1, 0 }, { 1, -1 }
-                       , { 0, -1 }, {-1, -1 } };
-        public BinaryMeasurer(ref Bitmap bmp)
-        {
-            width = bmp.Width;
-            height = bmp.Height;
-            flag = new int[bmp.Width, bmp.Height];
-            gray = new int[bmp.Width, bmp.Height];
-            arr = new List<Block>();
-            for (int i = 0; i < bmp.Width; i++)
-            {
-                for (int j = 0; j < bmp.Height; j++)
-                {
-                    flag[i, j] = 0;
-                    gray[i, j] = bmp.GetPixel(i, j).R;
-                }
-            }
-        }
-    
-        //洪泛法求面积
-        public void CalSize()
-        {
-            for(int i=0;i<width;i++)
-            {
-                for(int j=0;j<height;j++)
-                {
-                    if(flag[i, j]==0 && gray[i,j]==0)
-                    {
-                        Block block = new Block(0, 0, 0, height, width, 0);
-                        arr.Add(block);
-                        FloodFill(i, j, mk++);
-                    }
-                }
-            }
-        }
-    
-        //洪泛函数,用栈模拟递归防止栈溢出
-        void FloodFill(int xi, int yi, int mkk)
-        {
-            int m = mkk - 1;
-            Stack<int> stack = new Stack<int>();
-            stack.Push(xi * width + yi);
-            while(stack.Count()!=0)
-            {
-                int x = stack.Peek() / width, y = stack.Peek() % width;
-                stack.Pop();
-                flag[x, y] = mkk;
-                arr[m].size += 1;
-                arr[m].up = Math.Max(arr[m].up, y);
-                arr[m].bottom = Math.Min(arr[m].bottom, y);
-                arr[m].left = Math.Min(arr[m].left, x);
-                arr[m].right = Math.Max(arr[m].right, x);
-                int xx = x - 1, yy = y;
-                if (xx >= 0 && xx < width && yy >= 0 && yy < height)
-                {
-                    if (flag[xx, yy] == 0 && gray[xx, yy] == 0)
-                    {
-                        stack.Push(xx * width + yy);
-                    }
-                }
-                xx = x + 1; yy = y;
-                if (xx >= 0 && xx < width && yy >= 0 && yy < height)
-                {
-                    if (flag[xx, yy] == 0 && gray[xx, yy] == 0)
-                    {
-                        stack.Push(xx * width + yy);
-                    }
-                }
-                xx = x; yy = y - 1;
-                if (xx >= 0 && xx < width && yy >= 0 && yy < height)
-                {
-                    if (flag[xx, yy] == 0 && gray[xx, yy] == 0)
-                    {
-                        stack.Push(xx * width + yy);
-                    }
-                }
-                xx = x; yy = y + 1;
-                if (xx >= 0 && xx < width && yy >= 0 && yy < height)
-                {
-                    if (flag[xx, yy] == 0 && gray[xx, yy] == 0)
-                    {
-                        stack.Push(xx * width + yy);
-                    }
-                }
-            }
-        }
-    
-        //沿边缘计算周长
-        public void CalPerimeter()
-        {
-            for(int k=1;k<mk;k++)
-            {
-                bool f = false;
-                for(int i=arr[k-1].left; !f && i<=arr[k-1].right;i++)
-                {
-                    for(int j=arr[k-1].bottom;j<=arr[k-1].up;j++)
-                    {
-                        if(flag[i, j] == k)
-                        {
-                            arr[k - 1].perimeter = 1;
-                            int kk = 1;
-                            for(;;kk=(kk+1)%8)
+                            int xx = i + dirs[kk, 0], yy = j + dirs[kk, 1];
+                            if (xx >= 0 && xx < width && yy >= 0 && yy < height)
                             {
-                                int xx = i + dirs[kk, 0], yy = j + dirs[kk, 1];
-                                if (xx >= 0 && xx < width && yy >= 0 && yy < height)
+                                if (flag[xx, yy] == k)
                                 {
-                                    if (flag[xx, yy] == k)
-                                    {
-                                        LeftHand(xx, yy, i, j, k);
-                                        break;
-                                    }
+                                    LeftHand(xx, yy, i, j, k);
+                                    break;
                                 }
                             }
-    
-                            f = true;
-                            break;
                         }
+
+                        f = true;
+                        break;
                     }
                 }
             }
-        }
-    
-        //轮廓跟踪法
-        void LeftHand(int x, int y, int stx, int sty, int k)
-        {
-            int prex = stx, prey = sty;
-            int pred = JudgeDir(x, y, stx, sty);
-            while (x != stx || y != sty) {
-                flag[x, y] = 0;
-                int d = pred - 2;
-                if (d < 0) d += 8;
-                arr[k - 1].perimeter += 1;
-                int xx=x, yy=y;
-                for (int dd = 0; dd < 8; dd++)
-                {
-                    int kk = (d + dd)%8;
-                    xx = x + dirs[kk, 0]; yy = y + dirs[kk,1];
-                    if (xx == stx && yy == sty)
-                        return;
-                    if (xx >= 0 && xx < width && yy>=0 && yy<height)
-                    {
-                        if(flag[xx, yy]==k)
-                        {
-                            pred = kk;
-                            break;
-                        }
-                    }
-                }
-                if (xx == x && yy == y) break;
-                x = xx; y = yy;
-            }
-        }
-    
-        // 判断方向下标函数
-        private int JudgeDir(int x, int y, int prex, int prey)
-        {
-            if (x == prex)
-            {
-                if (y == prey - 1) return 2;
-                else if (y == prey + 1) return 6;
-            }
-            else if (y == prey)
-            {
-                if (x == prex - 1) return 0;
-                else if (x == prex + 1) return 4;
-            }
-            else if (x == prex - 1)
-            {
-                if (y == prey - 1) return 1;
-                else if (y == prey + 1) return 7;
-            }
-            else if (x == prex + 1)
-            {
-                if (y == prey - 1) return 3;
-                else if (y == prey + 1) return 5;
-            }
-            return -1;
         }
     }
-    
-    
-    /// <summary>
-    /// 测量二值化图像
-    /// </summary>
-    private void MeasureBinary()
+
+    //轮廓跟踪法
+    void LeftHand(int x, int y, int stx, int sty, int k)
     {
-        System.Drawing.Image oriImg = bmp;
-        BinaryMeasurer measure = new BinaryMeasurer(ref bmp);
-        measure.CalSize();
-        measure.CalPerimeter();
-        // 展示结果
-        FlagWindow fw = new FlagWindow(oriImg, measure.arr);
-        fw.Show();
+        int prex = stx, prey = sty;
+        int pred = JudgeDir(x, y, stx, sty);
+        while (x != stx || y != sty) {
+            flag[x, y] = 0;
+            int d = pred - 2;
+            if (d < 0) d += 8;
+            arr[k - 1].perimeter += 1;
+            int xx=x, yy=y;
+            for (int dd = 0; dd < 8; dd++)
+            {
+                int kk = (d + dd)%8;
+                xx = x + dirs[kk, 0]; yy = y + dirs[kk,1];
+                if (xx == stx && yy == sty)
+                    return;
+                if (xx >= 0 && xx < width && yy>=0 && yy<height)
+                {
+                    if(flag[xx, yy]==k)
+                    {
+                        pred = kk;
+                        break;
+                    }
+                }
+            }
+            if (xx == x && yy == y) break;
+            x = xx; y = yy;
+        }
     }
-    ```
 
-    
+    // 判断方向下标函数
+    private int JudgeDir(int x, int y, int prex, int prey)
+    {
+        if (x == prex)
+        {
+            if (y == prey - 1) return 2;
+            else if (y == prey + 1) return 6;
+        }
+        else if (y == prey)
+        {
+            if (x == prex - 1) return 0;
+            else if (x == prex + 1) return 4;
+        }
+        else if (x == prex - 1)
+        {
+            if (y == prey - 1) return 1;
+            else if (y == prey + 1) return 7;
+        }
+        else if (x == prex + 1)
+        {
+            if (y == prey - 1) return 3;
+            else if (y == prey + 1) return 5;
+        }
+        return -1;
+    }
+}
 
-## 四. 完成体会
 
-​		本次实验实现了图像分割的多种方法，只可惜一种较为复杂的“分裂合并分割法”因为本人算法设计有缺陷，运用在大图上导致了栈溢出错误，最终没能实现。
+/// <summary>
+/// 测量二值化图像
+/// </summary>
+private void MeasureBinary()
+{
+    System.Drawing.Image oriImg = bmp;
+    BinaryMeasurer measure = new BinaryMeasurer(ref bmp);
+    measure.CalSize();
+    measure.CalPerimeter();
+    // 展示结果
+    FlagWindow fw = new FlagWindow(oriImg, measure.arr);
+    fw.Show();
+}
+```
 
-
-
+![测量结果](https://irimskyblog.oss-cn-beijing.aliyuncs.com/content/image-20201225012746438.png)
