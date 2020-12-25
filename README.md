@@ -4,7 +4,7 @@
 
 
 
-**GitHub源码**：[https://github.com/irimsky/DIP_Exp](https://github.com/irimsky/DIP_Exp)
+**GitHub源码**：[https://github.com/irimsky/Digital-Image-Processor](https://github.com/irimsky/Digital-Image-Processor)
 
 
 
@@ -14,7 +14,6 @@
 
 
 
-[TOC]
 
 
 
